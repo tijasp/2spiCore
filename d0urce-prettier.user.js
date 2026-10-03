@@ -427,6 +427,10 @@
             0.01, 0.03, 0.1, 0.3, 1.5, 4.5, 45
         ],
         cf_filament_value: 0.1 / 90,
+        holdoutRange: {
+            WORST_HOLDOUT: 2.269,
+            BEST_HOLDOUT: 20.053
+        }
     };
 
     // Export stats and helper functions for access outside the IIFE
@@ -928,6 +932,7 @@
         const cLong = [13.6, ms * 3];
         return [1000 + hp * 3, rd * 3, regen * 3 * .3, (cShort[0] * cShort[1] + cMed[0] * cMed[1] + cLong[0] * cLong[1]) / (cShort[1] + cMed[1] + cLong[1])];
     }
+    window.firewallEncryption = firewallEncryption;
 
     const penTest = (port, cpu, aTPH) => {
         var t = 0;
@@ -944,10 +949,8 @@
     }
     window.penTest = penTest;
 
-    // Calculate holdout percentages for progress bar (worst=2.269s, best=20.053s)
-    const WORST_HOLDOUT = 2.269;
-    const BEST_HOLDOUT = 20.053;
     const calculateHoldoutPercentage = (holdout) => {
+        const { WORST_HOLDOUT, BEST_HOLDOUT } = stats.holdoutRange;
         return Math.max(0, Math.min(100, ((holdout - WORST_HOLDOUT) / (BEST_HOLDOUT - WORST_HOLDOUT)) * 100));
     };
     window.calculateHoldoutPercentage = calculateHoldoutPercentage;
@@ -958,10 +961,10 @@
         idle *= 3600;
         // Maximum bartering benefit is selling uncommons, assuming it is used:
         barter /= 100;
-        barter = ((1 + barter) * 0.00864000 - 0.00864000) * npcsPerHour;
+        barter = (barter * 0.00864000) * npcsPerHour;
         // Hack bonus, similar to bartering
         crypto /= 100;
-        crypto = ((1 + crypto) * 0.00180000 - 0.00180000) * npcsPerHour;
+        crypto = (crypto * 0.00180000) * npcsPerHour;
         return idle + barter + crypto;
     }
 
@@ -1028,7 +1031,7 @@
         const cpu = stats.cpu[rarity];
         const cpuV = hackPower(cpu.hack[1] + stats.cputerm[rarity] * (level - 1), cpu.trueDam[1], cpu.pen[1], cpu.chance[1], cpu.dam[1]);
         const cpsAverage = 5;
-        const bestPort = firewallEncryption(item.hp[1] + stats.fireterm[rarity] * (level - 1), item.rd[1], item.regen[1], item.medium[1], item.long[1]);
+        const bestPort = firewallEncryption(item.hp[1] + stats.fireterm[rarity] * (level - 1), item.rd[1], item.regen[1], item.medium[0], item.long[1]);
         const worstPort = firewallEncryption(item.hp[0] + stats.fireterm[rarity] * (level - 1), item.rd[0], item.regen[0], item.medium[0], item.long[0]);
         const bestHoldout = penTest(bestPort, cpuV, bestPort[3] / cpsAverage + .3);
         const worstHoldout = penTest(worstPort, cpuV, worstPort[3] / cpsAverage + .3);
@@ -3628,8 +3631,9 @@ async function openPadlet() {
         const totalScore = 100 + sumAdvEnc + sumMasterEnc;
         const cpwNumeric = ((100 / totalScore) * 3.7 + (sumAdvEnc / totalScore) * 8.6 + (sumMasterEnc / totalScore) * 13.6);
         const cpw = cpwNumeric.toFixed(2);
-        const hrpm = Math.round((sumRegen * 0.3 * 60) / (1 - sumReduction / 100));
-        const trueHP = (1000 + sumHP) / (1 - sumReduction / 100);
+        const [displayHP, displayRD, displayRegen] = window.firewallEncryption(sumHP / 3, sumReduction / 3, sumRegen / 3, sumAdvEnc, sumMasterEnc);
+        const hrpm = Math.round((displayRegen * 60) / (1 - displayRD));
+        const trueHP = displayHP / (1 - displayRD);
 
         const targetDiv = computerWindow.querySelector("div:nth-child(2) > div > div.section:nth-child(3) > div:nth-child(2) > div > div:nth-child(2)");
         if (!targetDiv) {
@@ -3680,7 +3684,7 @@ async function openPadlet() {
                 bestCpuStats.dam[1]
             );
 
-            const actualPort = [1000 + sumHP, sumReduction / 100, sumRegen, cpwNumeric];
+            const actualPort = [displayHP, displayRD, displayRegen, cpwNumeric];
             actualHoldout = window.penTest([...actualPort], bestCpuPower, cpwNumeric / cpsAverage + 0.3);
             holdoutPercentage = window.calculateHoldoutPercentage(actualHoldout);
         } catch (e) {
@@ -3701,13 +3705,13 @@ async function openPadlet() {
         progressBar.innerHTML = `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-family: Consolas, monospace; font-weight: 600; font-size: 12px; text-shadow: 0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.6);">${holdoutPercentage.toFixed(3)}%</div>`;
     
         const stops = [
-            { color: colorD, start: 0, end: 5.3 },
-            { color: colorC, start: 5.4, end: 11.5 },
-            { color: colorB, start: 11.6, end: 29.5 },
-            { color: colorA, start: 29.6, end: 48.7 },
-            { color: colorS, start: 48.8, end: 57.5 },
-            { color: colorSS, start: 57.6, end: 76 },
-            { color: colorSSS, start: 76.1, end: 100 }
+            { color: colorD, start: 0, end: 3.3 },
+            { color: colorC, start: 3.4, end: 12 },
+            { color: colorB, start: 12.1, end: 25.2 },
+            { color: colorA, start: 25.3, end: 37 },
+            { color: colorS, start: 37.1, end: 50.6 },
+            { color: colorSS, start: 50.7, end: 70.3 },
+            { color: colorSSS, start: 70.4, end: 100 }
         ];
     
         // Build gradient stops with smooth blending between colors
