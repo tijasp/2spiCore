@@ -1749,7 +1749,7 @@
             <div style="color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7; letter-spacing: 0.3px; font-weight: lighter; margin-bottom: 8px;">
                 New In ${VERSION}:
             </div>
-` + [
+        ` + [
             ["/510901/check", "#f75252", "Alt Accounts Support"],
             ["532323/lock-alt", "#52e7f7", "Displaying Daily BTC Earnings"],
             ["489106/remove", "#f75252", "Removed Sticky line (on window dragging)"],
@@ -1757,8 +1757,22 @@
                 <img class="icon" src="https://www.svgrepo.com/show/${icon}.svg" style="filter: drop-shadow(50px 0px 100px ${color}) invert(96%) sepia(95%) saturate(7486%) hue-rotate(143deg) brightness(100%) contrast(94%);"></img>
                 <span>${text}</span>
             </div>
-`).join("") + "            ")
-    }
+        `).join("") + "            ")
+        
+        try {
+            const actualVersion = fetch("https://raw.githubusercontent.com/tijasp/2spiCore/refs/heads/main/VERSION");
+            if (actualVersion !== VERSION) {
+                sendLog(`
+                    <div style="color:rgb(247, 58, 58); font-size: 1.5rem; font-weight: 900; letter-spacing: 0.3px; margin-bottom: 8px; text-align: center">
+                        OUTDATED VERSION ! <br>
+                        <a style="font-size: 1.2rem; color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7;" href="https://github.com/tijasp/2spiCore" target="_blank">Click here</a> <span style="font-size: 1.2rem; color:rgb(255, 255, 255)">  to Download last version</span>
+                    </div>
+                `);
+            };
+        } catch (e) {
+            console.log(`Error : ${e}`);
+        };
+    };
 
     const filamentObserver = new MutationObserver(function (mutations) {
         if (mutations.length == 1 && !mutations[0].target.id && player.configuration.displayCustomFilament != "default")
