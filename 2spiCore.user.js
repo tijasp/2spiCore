@@ -12,7 +12,7 @@
 
 (function () {
     'use strict';
-    const VERSION = "1.0.1"
+    const VERSION = "1.0.11"
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
@@ -1758,20 +1758,6 @@
                 <span>${text}</span>
             </div>
         `).join("") + "            ")
-        
-        try {
-            const actualVersion = fetch("https://raw.githubusercontent.com/tijasp/2spiCore/refs/heads/main/VERSION");
-            if (actualVersion !== VERSION) {
-                sendLog(`
-                    <div style="color:rgb(247, 58, 58); font-size: 1.5rem; font-weight: 900; letter-spacing: 0.3px; margin-bottom: 8px; text-align: center">
-                        OUTDATED VERSION ! <br>
-                        <a style="font-size: 1.2rem; color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7;" href="https://github.com/tijasp/2spiCore" target="_blank">Click here</a> <span style="font-size: 1.2rem; color:rgb(255, 255, 255)">  to Download last version</span>
-                    </div>
-                `);
-            };
-        } catch (e) {
-            console.log(`Error : ${e}`);
-        };
     };
 
     const filamentObserver = new MutationObserver(function (mutations) {
@@ -2473,6 +2459,28 @@ any of these keys!
         };
     };
 
+    // ======================================== Version Checking ========================================
+
+    async function checkVersion() {
+        try {
+          const response = await fetch("https://raw.githubusercontent.com/tijasp/2spiCore/refs/heads/main/VERSION");
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
+          const actualVersion = await response.text();
+          if (actualVersion !== VERSION) {
+            sendLog(`
+                <div style="color:rgb(247, 58, 58); font-size: 1.5rem; font-weight: 900; letter-spacing: 0.3px; margin-bottom: 8px; text-align: center">
+                    OUTDATED VERSION ! <br>
+                    <a style="font-size: 1.2rem; color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7;" href="https://github.com/tijasp/2spiCore" target="_blank">Click here</a> <span style="font-size: 1.2rem; color:rgb(255, 255, 255)">  to Download last version</span>
+                </div>
+            `);
+        };
+        } catch (error) {
+          console.error('Impossible to fetch last version: ', error);
+        }
+    }
+
     /*  Feature registry: everything the startup sequence loads, in load order.
         To add a feature, write its function above and add an entry here. The loading screen count picks it up automatically.
           name      - text shown on the loading screen
@@ -2505,6 +2513,7 @@ any of these keys!
         { name: "Daily BTC Earnings display", load: createDailyChangeDiv, includes: ["BTC Balance observer"] },
         { name: "Item swag", load: applyItemSwag },
         { name: "Welcome message", load: async () => { divs["Log"].click(); await sleep(100); editWelcomeMessage(); } },
+        { name: "Checking last version", load: checkVersion },
         { name: "Staff status check", load: () => tryCheckStaffStatus(document.querySelector("main")) },
         { name: "User input manager", load: loadUserInputManager, includes: ["Context menus", "Multi-select", "Window snapping", "Alt hotkeys"] },
         { name: "Inventory window", load: editInventoryWindow, includes: ["Inventory sorting"] },
