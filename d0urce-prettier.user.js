@@ -1752,6 +1752,7 @@
 ` + [
             ["/510901/check", "#f75252", "Alt Accounts Support"],
             ["532323/lock-alt", "#52e7f7", "Displaying Daily BTC Earnings"],
+            ["489106/remove", "#f75252", "Removed Sticky line (on window dragging)"],
         ].map(([icon, color, text]) => `            <div style="display: flex; align-items: center; gap: 8px; margin: 6px 0;">
                 <img class="icon" src="https://www.svgrepo.com/show/${icon}.svg" style="filter: drop-shadow(50px 0px 100px ${color}) invert(96%) sepia(95%) saturate(7486%) hue-rotate(143deg) brightness(100%) contrast(94%);"></img>
                 <span>${text}</span>
