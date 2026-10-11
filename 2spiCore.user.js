@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2spiCore
-// @version      1.11.0
+// @version      1.0.2
 // @description  d0urce Fork
 // @author       2spi & d0t
 // @match        https://s0urce.io/
@@ -12,7 +12,7 @@
 
 (function () {
     'use strict';
-    const VERSION = "1.0.11"
+    const VERSION = "1.0.2"
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
@@ -1247,7 +1247,10 @@
             } catch { return }
         }
 
-        if (win02.querySelector(".window-title > img[src='icons/loot.svg']")) await manageLoot();
+        if (win02.querySelector(".window-title > img[src='icons/loot.svg']")) {
+            await updateStatisticsWindow();
+            await manageLoot();
+        };
         const windowOf02 = (icon) => win02.querySelector(`.window-title > img[src='icons/${icon}.svg']`)?.parentNode?.parentNode;
         const isInventoryWindow = windowOf02("inventory");
         if (isInventoryWindow) editInventoryWindow(isInventoryWindow);
@@ -1752,7 +1755,7 @@
         ` + [
             ["/510901/check", "#f75252", "Alt Accounts Support"],
             ["532323/lock-alt", "#52e7f7", "Displaying Daily BTC Earnings"],
-            ["489106/remove", "#f75252", "Removed Sticky line (on window dragging)"],
+            ["446742/statistics", "#f75252", "NPC Drop Rates Statistics"],
         ].map(([icon, color, text]) => `            <div style="display: flex; align-items: center; gap: 8px; margin: 6px 0;">
                 <img class="icon" src="https://www.svgrepo.com/show/${icon}.svg" style="filter: drop-shadow(50px 0px 100px ${color}) invert(96%) sepia(95%) saturate(7486%) hue-rotate(143deg) brightness(100%) contrast(94%);"></img>
                 <span>${text}</span>
@@ -2461,7 +2464,7 @@ any of these keys!
 
     // ======================================== Version Checking ========================================
 
-    async function checkVersion() {
+    const checkVersion = async () => {
         try {
           const response = await fetch("https://raw.githubusercontent.com/tijasp/2spiCore/refs/heads/main/VERSION");
           if (!response.ok) {
@@ -2478,7 +2481,137 @@ any of these keys!
         };
         } catch (error) {
           console.error('Impossible to fetch last version: ', error);
-        }
+        };
+    };
+
+    // ======================================== Statistics ========================================
+
+    const createStatisticsWindow = () => {
+        const desktopContainer = document.getElementById('desktop-container');
+        const statsIcon = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgoJPHBhdGggZD0iTTAgMGgxNnYxNkgweiIgZmlsbD0ibm9uZSIgLz4KCTxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0xLjc1IDEzLjI1VjEuNUguNXYxMmExLjI0IDEuMjQgMCAwIDAgMS4yMiAxSDE1LjV2LTEuMjV6IiAvPgoJPHBhdGggZmlsbD0iI2ZmZiIgZD0iTTMuMTUgOEg0LjR2My45SDMuMTV6bTMuMjYtNGgxLjI2djcuOUg2LjQxem0zLjI3IDJoMS4yNXY1LjlIOS42OHptMy4yNy0zLjVoMS4yNXY5LjRoLTEuMjV6IiAvPgo8L3N2Zz4K';
+
+        const statsDesktopIcon = document.createElement('div');
+        statsDesktopIcon.id = 'stats-button';
+        statsDesktopIcon.ondragover = 'return true';
+        statsDesktopIcon.draggable = true;
+        statsDesktopIcon.style.cssText = 'position: relative; width: 153px; height: 85px; font-size: 16px; float: left;';
+        statsDesktopIcon.innerHTML = `
+                                    <div class='wrapper svelte-1ye0fc6'>
+                                        <div style='width: 100%; height: calc(100% - 20px); padding-bottom: 5px;'>
+                                            <img draggable='false' src='${statsIcon}' alt='Statistic Desktop Icon' class='svelte-1ye0fc6' style='height: 100%;'>
+                                        </div> 
+                                        <div class='svelte-1ye0fc6' style='height: 20px; font-size: 16px;'>Statistics</div>
+                                    </div>`;
+
+        let statsWindow = document.createElement('div');
+        statsWindow.id = 'stats-window';
+        statsWindow.classList.add('window', 'svelte-1hjm43z');
+        statsWindow.style.cssText = 'display: none; z-index: 99; left: 714.5px; top: 356px;';
+        statsWindow.innerHTML = `
+                                <div class='window-title svelte-1hjm43z' style='user-select: none;'>
+                                    <img draggable='false' class='icon icon-in-text' src='${statsIcon}' alt='Statistics'> Statistics 
+                                    <button class='window-close svelte-1hjm43z' id='closeStats'>
+                                        <img draggable='false' class='icon' src='https://s0urce.io/icons/close.svg' alt='Close Icon'>
+                                    </button>
+                                </div>
+                                <div class='window-content svelte-1hjm43z' style='padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;'>
+                                </div>`;
+
+        let npcStats = document.createElement('div');
+        npcStats.innerHTML = `
+                            <div style='display: flex; flex-direction: column; align-items: center; gap: 1.25rem; padding: 1rem 1.25rem; border-radius: 0.5rem; background-color: #1a1a1a; border: 1px solid #2e2e2e;'>
+                                <div style='text-align: center;'>
+                                    <h2 style='font-size: 2rem; font-weight: 700; margin: 0;'>NPC Drop Rate</h2>
+                                    <p style='font-size: 1.25rem; color: #aaaaaa; margin: 0.250rem 0 0;'>Statistics for <span id='hackedNpcCount'>${player.drops['total']}</span> NPCs</p>
+                                </div>
+                                <div style='display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; column-gap: 0.75rem; row-gap: 0.5rem;'>
+                                    ${insertNpcStatsRows()}
+                                </div>
+                            </div>`;
+
+        desktopContainer.appendChild(statsDesktopIcon);
+        const statsWindowContent = statsWindow.querySelector('.window-content');
+        statsWindowContent.appendChild(npcStats);
+        document.querySelector('main').appendChild(statsWindow);
+        statsWindowEventListeners();
+    };
+
+    const statsWindowEventListeners = () => {
+        const statsWindow = document.getElementById('stats-window');
+        const statsDesktopIcon = document.getElementById('stats-button');
+        const statsTitleBar = statsWindow.querySelector('.window-title');
+        let isDraggingStats = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+    
+        statsTitleBar.addEventListener('mousedown', (e) => {
+            if (e.target.closest('#closeStats')) return;
+            isDraggingStats = true;
+            const rect = statsWindow.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+        });
+    
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingStats) return;
+            statsWindow.style.left = `${e.clientX - dragOffsetX}px`;
+            statsWindow.style.top = `${e.clientY - dragOffsetY}px`;
+        });
+    
+        document.addEventListener('mouseup', () => {
+            isDraggingStats = false;
+        });
+    
+        statsDesktopIcon.addEventListener('click', () => {
+            statsWindow.style.display = 'block';
+        });
+    
+        document.getElementById('closeStats').addEventListener('click', () => {
+            statsWindow.style.display = 'none';
+        });
+    };
+
+    const insertNpcStatsRows = () => {
+        calculateDropRates();
+        return lootRarity.slice(0, -1).map(r => {
+            return `
+                <div style='width: 0.750rem; height: 0.750rem; border-radius: 50%; background: ${r.color}; flex-shrink: 0;'></div>
+                <span style='font-size: 1.25rem; font-weight: 600; color: white; text-align: left'>${r.name}</span>
+                <div style='position: relative; height: 0.5rem; width: 8rem; background: #2e2e2e; border-radius: 3px; overflow: hidden;'>
+                    <div id='${r.name}Bar' style='position: absolute; left: 0; top: 0; height: 100%; width: ${Math.pow(player.dropRates[r.name] / 100, 0.5) * 100}%; background: ${r.color};'></div>
+                </div>
+                <span style='font-size: 1.25rem; font-weight: 600; text-align: right;'><span id='${r.name}Rate'>${player.dropRates[r.name]}</span>%</span>
+                <span style='font-size: 1.25rem; color: #aaaaaa; text-align: right;'>(<span id='${r.name}Drops'>${player.drops[r.name]}</span>)</span>
+            `;
+        }).join('');
+    };
+
+    const calculateDropRates = () => {
+        lootRarity.slice(0, -1).forEach(r => {
+            player.dropRates[r.name] = player.drops['total'] ? ((player.drops[r.name] / player.drops['total']) * 100).toFixed(2) : '0.00';
+        });
+    };
+
+    const updateStatisticsWindow = async () => {
+        const item = document.querySelector('.window-loot > div > div > div > div > div > .item');
+        let background = item.style.background;
+        let rarity = raritiesVariables[background] || raritiesVariables[background + ")"];
+
+        if (player.drops[rarity] === undefined) return;
+
+        player.drops['total']++;
+        player.drops[rarity]++;
+
+        document.getElementById('hackedNpcCount').textContent = player.drops['total'];
+        calculateDropRates();
+
+        lootRarity.slice(0, -1).forEach(r => {
+            document.getElementById(`${r.name}Bar`).style.width = `${Math.pow(player.dropRates[r.name] / 100, 0.5) * 100}%`;
+            document.getElementById(`${r.name}Rate`).textContent = player.dropRates[r.name];
+            document.getElementById(`${r.name}Drops`).textContent = player.drops[r.name];
+        });
+
+        save();
     }
 
     /*  Feature registry: everything the startup sequence loads, in load order.
@@ -2510,6 +2643,7 @@ any of these keys!
         { name: "Default windows", load: openWindows },
         // { name: "Networth calculation", load: calculateNetworth },
         { name: "Networth display", load: createNetworthDiv, includes: ["Networth observer"] },
+        { name: "Statistics display", load: createStatisticsWindow, includes: ["Loot observer"] },
         { name: "Daily BTC Earnings display", load: createDailyChangeDiv, includes: ["BTC Balance observer"] },
         { name: "Item swag", load: applyItemSwag },
         { name: "Welcome message", load: async () => { divs["Log"].click(); await sleep(100); editWelcomeMessage(); } },
