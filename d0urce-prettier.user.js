@@ -1,18 +1,18 @@
 // ==UserScript==
-// @name         prettier-d0urce
+// @name         2spiCore
 // @version      1.11.0
-// @description  Get a prettier s0urce.io environment! Template made by Xen0o2.
-// @author       d0t
+// @description  d0urce Fork
+// @author       2spi & d0t
 // @match        https://s0urce.io/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=s0urce.io
-// @downloadURL  https://raw.githubusercontent.com/d0t3k1/d0t-s0urce-prettier/main/d0urce-prettier.js
-// @updateURL    https://raw.githubusercontent.com/d0t3k1/d0t-s0urce-prettier/main/d0urce-prettier.js
+// @downloadURL  https://github.com/tijasp/2spiCore/raw/refs/heads/main/d0urce-prettier.user.js
+// @updateURL    https://github.com/tijasp/2spiCore/raw/refs/heads/main/d0urce-prettier.user.js
 // @grant        none
 // ==/UserScript==
 
 (function () {
     'use strict';
-    const VERSION = "1.11.1"
+    const VERSION = "1.0.0"
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
@@ -203,25 +203,48 @@
     const perRarity = (list, value) => Object.fromEntries(list.map((rarity, i) =>
         [rarity, Object.fromEntries(["cpu", "gpu", "psu", "firewall", "other"].map(type => [type, value(i)]))]));
 
-    const storedJSON = (key, fallback) => localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : fallback;
-
-    const player = {
+    let player = {
         username: document.querySelector("img[src='icons/online.svg']")?.parentNode?.innerText?.trim(),
         hacksInProgress: [], currentlyHacking: null, lastHacked: null,
         configuration: {
             openInSilent: [],
             displayCustomFilament: "ethereal",
-            desktopIconColor: localStorage.getItem("prettier-desktopIconColor") || "#ffffff",
-            currentTheme: localStorage.getItem("prettier-currentTheme") || Object.keys(themes)[0],
-            codeSyntaxing: !!localStorage.getItem("prettier-codeSyntaxing"),
-            windowColors: storedJSON("prettier-windowColors", defaultColors)
+            desktopIconColor: "#ffffff",
+            desktopIconSize: "",
+            backgroundImage: null,
+            currentTheme: Object.keys(themes)[0],
+            windowColors: { windowBorder: "#91aabd3b", windowTabLight: "#1f1e23", windowTabDark: "#131317" },
         },
         input: { isShiftDown: false },
-        staffRole: localStorage.getItem("prettier-staff-role"),
+        staffRole: "",
         selectedItems: [],
-        autoloot: storedJSON("prettier-autoloot", perRarity(rarities.slice(0, -1), () => "take")),
-        tradePricing: storedJSON("prettier-tradePricing", perRarity(rarities, (i) => [0.01, 0.03, 0.1, 0.3, 1.5, 4.5, 45][i])),
-    }
+        autoloot: perRarity(rarities.slice(0, -1), () => "take"),
+        tradePricing: perRarity(rarities, (i) => [0.01, 0.03, 0.1, 0.3, 1.5, 4.5, 45][i]),
+
+        btcDailyStats: {
+            startBalance: 0,
+            date: "",
+        },
+
+        drops: {
+            total: 0,
+            common: 0,
+            uncommon: 0,
+            rare: 0,
+            epic: 0,
+            legendary: 0,
+            mythic: 0
+        },
+
+        dropRates: {
+            common: 0.00,
+            uncommon: 0.00,
+            rare: 0.00,
+            epic: 0.00,
+            legendary: 0.00,
+            mythic: 0.00
+        }
+    };
 
     const stats = {
         cpu: [
@@ -360,8 +383,8 @@
             inner.style.background = "var(--color-darkgreen)";
     }
 
-    const prettierLoadFails = (code) => {
-        alert(`Prettier-d0urce loading failed, please contact d0t on Discord (error code: ${code})`);
+    const coreLoadFails = (code) => {
+        alert(`2spiCore loading failed, please contact _2spi_ on Discord (error code: ${code})`);
     }
 
     const sendLog = async (HTMLContent) => {
@@ -387,8 +410,8 @@
 
     function tryCheckStaffStatus(rootElement) {
         const computerWindow = rootElement.querySelector(".window-title > img[src='icons/computer.svg']")?.parentNode?.parentNode;
-        const staffRole = computerWindow?.querySelector(".badge")?.innerText || localStorage.getItem("prettier-staff-role");
-        localStorage.setItem("prettier-staff-role", staffRole || "")
+        const staffRole = computerWindow?.querySelector(".badge")?.innerText || player.staffRole;
+        player.staffRole = staffRole || "";
         if (staffRoles.includes(staffRole) && !evilStaffFeaturesActivated) {
             evilStaffFeaturesActivated = true;
             player.staffRole = staffRole;
@@ -405,7 +428,6 @@
     const colorizeTerminal = async () => {
         const codeElement = document.querySelector("#code-list");
         const codeSection = document.querySelector("#section-code");
-        if (!codeElement || !codeSection || !player.configuration.codeSyntaxing) return;
         document.querySelector("#highlighted")?.remove();
         codeElement.style.display = "none";
         const codeContent = codeElement.innerHTML.replace(/<br(\/)?>/g, "\n").replace(/<span style="margin-left: 30px;">/g, "\t");
@@ -442,7 +464,7 @@
                             style: { position: "absolute", left: 0, height: "100%", width: "100%", opacity: "0" },
                             onchange: (e) => {
                                 player.configuration.currentTheme = e.target.value;
-                                localStorage.setItem("prettier-currentTheme", e.target.value);
+                                save()
                                 document.querySelector("#selected-theme").innerText = e.target.value;
                                 updateThemeStyle();
                             },
@@ -930,6 +952,10 @@
         description.style.width = "300px";
     });
 
+    const btcBalanceObserver = new MutationObserver(() => {
+        updateDailyBalance();
+    });
+
     let manageLoot = async () => {
         const item = document.querySelector(".window-loot > div > div > div > div > div > .item")
         let type = (item.querySelector("img")?.src?.match(/[^\/]+\.webp/) || [])[0]?.slice(0, -7).replace("router", "firewall");
@@ -1263,21 +1289,23 @@
 
         const isParamWindow = newWindow.addedNodes[0].querySelector(".window-title > img[src='icons/settings.svg']")?.parentNode?.parentNode;
         if (isParamWindow) {
-            isParamWindow.querySelector(".slider[min='70']").onchange = (e) => localStorage.setItem("prettier-desktopIconSize", e.target.value);
-            isParamWindow.querySelector(".window-content").style.width = "600px"
-            let currImage = localStorage.getItem("prettier-backgroundImage");
+            isParamWindow.querySelector(".slider[min='70']").onchange = (e) => player.configuration.desktopIconSize = e.target.value;
+            save();
+            isParamWindow.querySelector(".window-content").style.width = "600px";
+            let currImage = player.configuration.backgroundImage;
             const wrapper = isParamWindow.querySelector(".window-content > div");
             const shredder = wrapper.querySelector("div:nth-child(4)");
             shredder.querySelectorAll("button.green").forEach(button => button.click());
             shredder.style.display = "none";
             wrapper.querySelector("div:nth-child(1)").innerHTML = wrapper.querySelector("div:nth-child(1)").innerHTML.replace(/You're currently logged in as .+\./, "");
             wrapper.querySelector("div:nth-child(1) > div > div").style.marginTop = 0;
-            wrapper.querySelector("button.red").style.height = "30px"
+            wrapper.querySelector("button.red").style.height = "30px";
 
             function updateBackground(size) {
                 document.querySelector("body").style.backgroundSize = size;
                 document.querySelector("body").style.backgroundImage = currImage || "url(../../../img/bg-tile.png),radial-gradient(at center bottom,#273541,#0b0b0c)";
-                currImage && currImage !== "url()" ? localStorage.setItem("prettier-backgroundImage", currImage) : localStorage.removeItem("prettier-backgroundImage");
+                currImage && currImage !== "url()" ? player.configuration.backgroundImage = currImage : player.configuration.backgroundImage = null;
+                save();
             }
 
             const borderColor = "transparent"
@@ -1325,7 +1353,7 @@
                                                 player.autoloot[rarity.name][type] = e.target.value;
                                                 document.querySelector(`.${rarity.name}${type}`).innerText = e.target.value;
                                                 document.querySelector(`.${rarity.name}all`).innerText = allEqual(Object.values(player.autoloot[rarity.name])) ? player.autoloot[rarity.name].cpu : "-";
-                                                save("prettier-autoloot", player.autoloot);
+                                                save();
                                             },
                                             children: imOptions(action => action === player.autoloot[rarity.name][type])
                                         }),
@@ -1345,7 +1373,7 @@
                                                     document.querySelector(`.${rarity.name}${type}`).innerText = e.target.value;
                                                     document.querySelector(`.${rarity.name}all`).innerText = e.target.value;
                                                     player.autoloot[rarity.name][type] = e.target.value;
-                                                    save("prettier-autoloot", player.autoloot);
+                                                    save();
                                                 }
                                             },
                                             children: imOptions(action => allEqual(Object.values(player.autoloot[rarity.name])) && action === player.autoloot[rarity.name].cpu)
@@ -1376,7 +1404,7 @@
                 }
                 e.target.value = value;
                 apply(value);
-                save("prettier-tradePricing", player.tradePricing);
+                save();
                 e.target.style.border = "1px solid var(--color-lightgrey)";
                 done?.(value);
             };
@@ -1460,7 +1488,7 @@
 
             const setWindowColor = (color) => {
                 player.configuration.windowColors = { windowBorder: color, windowTabLight: color, windowTabDark: halfColor(color) }
-                save("prettier-windowColors", player.configuration.windowColors);
+                save();
                 loadStyle();
             };
             const textInputStyle = { padding: "10px", borderRadius: "2px", textAlign: "left", backgroundColor: "var(--color-grey)", boxShadow: "0 10px 20px var(--color-shadow) inset", border: "1px solid var(--color-lightgrey)", fontFamily: "var(--font-family-2)", zIndex: "60" };
@@ -1503,7 +1531,7 @@
                         style: { height: "35px", width: "85px" },
                         onclick: () => {
                             player.configuration.windowColors = defaultColors;
-                            save("prettier-windowColors", player.configuration.windowColors);
+                            save();
                             document.querySelector(".tab-color-picker").value = defaultColors.windowTabLight;
                             document.querySelector(".tab-color-input").value = defaultColors.windowTabLight;
                             loadStyle();
@@ -1714,12 +1742,9 @@
         if (!message) return;
         message.innerHTML = message.innerHTML
             .replace("System started.<br>", "")
-            .replace("s0urceOS 2023", "🔥 Prettier d0urceOS v" + VERSION + " 🔥")
-            .replace(">.", ">. <br><span style='font-size: 0.8rem; color: var(--color-lightgrey);'>Expanded by <span style='color: chartreuse; text-shadow: 0 0 3px chartreuse'>d0t</span> 😍.</span>")
-            .replace(">.", `>. <br><span style='font-size: 0.8rem; color: var(--color-lightgrey);'>Template made by <span style='color: pink; text-shadow: 0 0 3px pink'>Xen0o2</span>.</span>`);
-        sendLog(`
-            <a href="https://www.buymeacoffee.com/doteki">Buy me a <span style='color: chartreuse; text-shadow: 0 0 3px chartreuse'>dCoffee</span> 😉</a>
-        `)
+            .replace("s0urceOS 2023", "🔥 2spiCore (d0urce Fork) v" + VERSION + " 🔥")
+            .replace(">.", ">. <br><span style='font-size: 0.8rem; color: var(--color-lightgrey);'>Expanded by <span style='color: chartreuse; text-shadow: 0 0 3px chartreuse'>2spi</span> 😍.</span>")
+            .replace(">.", `>. <br><span style='font-size: 0.8rem; color: var(--color-lightgrey);'>Template made by <span style='color: pink; text-shadow: 0 0 3px pink'>Xen0o2 & d0t</span>.</span>`);
         sendLog(`
             <div style="color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7; letter-spacing: 0.3px; font-weight: lighter; margin-bottom: 8px;">
                 New In 1.11.X:
@@ -1758,7 +1783,7 @@
             return total;
         } catch (e) {
             console.log(e);
-            prettierLoadFails("7");
+            coreLoadFails("7");
         }
     }
 
@@ -1809,7 +1834,7 @@
             filamentObserver.disconnect();
             filamentObserver.observe(container, { subtree: true, characterData: true, childList: true });
         } catch (e) {
-            prettierLoadFails("6")
+            coreLoadFails("6")
         }
     }
 
@@ -1820,9 +1845,9 @@
                     id: "display-delete",
                     style: { position: "absolute", zIndex: "100", top: "0", height: "100vh", width: "100vw", backgroundColor: "black", opacity: "0.8", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" },
                     children: [
-                        new Component("span", { innerText: "Prettier d0urce", style: { color: "cornflowerblue", textShadow: "0 0 3px blue", fontFamily: "var(--font-family-2)", fontWeight: "500", fontSize: "3rem", opacity: "1" } }),
+                        new Component("span", { innerText: "2spiCore", style: { color: "cornflowerblue", textShadow: "0 0 3px blue", fontFamily: "var(--font-family-2)", fontWeight: "500", fontSize: "3rem", opacity: "1" } }),
                         new Component("span", { innerText: "Running Version " + VERSION, style: { color: "var(--color-lightgrey)", fontFamily: "var(--font-family-2)", fontWeight: "500", fontSize: "2rem", marginTop: "20px" } }),
-                        new Component("img", { src: "https://media.tenor.com/jwim7U-E7bkAAAAj/rat-spinning.gif", alt: "spinning rat" })
+                        new Component("img", { src: "https://s0urce.io/img/agent.gif", alt: "Pepe Hacker" })
                     ]
                 })
                 document.querySelector("html").append(display.element);
@@ -1840,30 +1865,34 @@
         windowOpenObserver.observe(document, options);
         windowCloseObserver.observe(document, options);
         itemHoverObserver.observe(document.querySelector("main"), options);
+        const btcBalanceDiv = document.querySelector('img[src="icons/btc.svg"]').parentElement;
+        if (btcBalanceDiv) btcBalanceObserver.observe(btcBalanceDiv, { characterData: true, subtree: true });
     }
 
     const updateThemeStyle = () => {
         const styleElement = document.getElementById('customStyles');
-        const css = themes[localStorage.getItem("prettier-currentTheme") || Object.keys(themes)[0]];
+        const css = themes[player.configuration.currentTheme];
         if (styleElement) styleElement.textContent = css;
         else document.head.appendChild(Object.assign(document.createElement('style'), { id: 'customStyles', textContent: css }));
     }
 
-    const save = (key, value, isJson = true) => localStorage.setItem(key, isJson ? JSON.stringify(value) : value)
+    const save = () => localStorage.setItem(`2spiCore-${player.username}`, JSON.stringify(player))
 
     const loadLocalStorage = () => {
+        if (!localStorage.getItem(`2spiCore-${player.username}`)) {
+            save();
+        } else {
+            player = JSON.parse(localStorage.getItem(`2spiCore-${player.username}`));
+        };
+
         const body = document.querySelector("body");
-        const backgroundImage = localStorage.getItem("prettier-backgroundImage");
+        const backgroundImage = player.configuration.backgroundImage;
         if (backgroundImage) {
             body.style.backgroundImage = backgroundImage;
             body.style.backgroundSize = "cover";
         } else body.style.backgroundSize = "auto";
         body.style.backgroundAttachment = "fixed";
         body.style.backgroundPosition = "center";
-
-        if (!localStorage.getItem("prettier-autoloot")) save("prettier-autoloot", player.autoloot)
-        if (!localStorage.getItem("prettier-windowColors")) save("prettier-windowColors", player.configuration.windowColors)
-        if (!localStorage.getItem("prettier-currentTheme")) localStorage.setItem("prettier-currentTheme", Object.keys(themes)[0])
     }
 
     const loadScripts = async () => {
@@ -2068,52 +2097,52 @@
     const pxToInt = (a) => (a.match(/\d+/) || [])[0];
     const findClosestValue = (arr, target) => arr.reduce((closest, num) => Math.abs(num - target) < Math.abs(closest - target) ? num : closest);
 
-    const manageWindowDragged = () => {
-        const windowDragged = document.querySelector(".window-selected");
-        const content = windowDragged?.querySelector(".window-content");
-        if (!windowDragged || !content) return;
-        if (windowDragged.querySelector(".window-title > img[src='icons/settings.svg']")) content.style.width = "600px";
+    // const manageWindowDragged = () => {
+    //     const windowDragged = document.querySelector(".window-selected");
+    //     const content = windowDragged?.querySelector(".window-content");
+    //     if (!windowDragged || !content) return;
+    //     if (windowDragged.querySelector(".window-title > img[src='icons/settings.svg']")) content.style.width = "600px";
 
-        const getPxValue = (style) => Number(style.match(/\d+/)[0]);
-        const top = getPxValue(windowDragged.style.top), bottom = sumPx(windowDragged.style.top, content.style.height) + 41;
-        const left = getPxValue(windowDragged.style.left), right = sumPx(windowDragged.style.left, content.style.width) + 2;
-        const allPositions = Array.from(document.querySelectorAll(".window")).filter(e => e !== windowDragged).map(e => {
-            const content = e.querySelector(".window-content");
-            return {
-                name: e.querySelector(".window-title").textContent, top: getPxValue(e.style.top), bottom: sumPx(e.style.top, content.style.height) + 42,
-                left: getPxValue(e.style.left), right: sumPx(e.style.left, content.style.width) + 1,
-            };
-        });
-        const sensitivity = 10;
-        const findMatching = (pos, key1, key2) => allPositions.find(e =>
-            (pos >= e[key1] - sensitivity && pos <= e[key1] + sensitivity) || (pos >= e[key2] - sensitivity && pos <= e[key2] + sensitivity));
-        const topMatching = findMatching(top, 'top', 'bottom'), bottomMatching = findMatching(bottom, 'top', 'bottom');
-        const rightMatching = findMatching(right, 'right', 'left'), leftMatching = findMatching(left, 'right', 'left');
+    //     const getPxValue = (style) => Number(style.match(/\d+/)[0]);
+    //     const top = getPxValue(windowDragged.style.top), bottom = sumPx(windowDragged.style.top, content.style.height) + 41;
+    //     const left = getPxValue(windowDragged.style.left), right = sumPx(windowDragged.style.left, content.style.width) + 2;
+    //     const allPositions = Array.from(document.querySelectorAll(".window")).filter(e => e !== windowDragged).map(e => {
+    //         const content = e.querySelector(".window-content");
+    //         return {
+    //             name: e.querySelector(".window-title").textContent, top: getPxValue(e.style.top), bottom: sumPx(e.style.top, content.style.height) + 42,
+    //             left: getPxValue(e.style.left), right: sumPx(e.style.left, content.style.width) + 1,
+    //         };
+    //     });
+    //     const sensitivity = 10;
+    //     const findMatching = (pos, key1, key2) => allPositions.find(e =>
+    //         (pos >= e[key1] - sensitivity && pos <= e[key1] + sensitivity) || (pos >= e[key2] - sensitivity && pos <= e[key2] + sensitivity));
+    //     const topMatching = findMatching(top, 'top', 'bottom'), bottomMatching = findMatching(bottom, 'top', 'bottom');
+    //     const rightMatching = findMatching(right, 'right', 'left'), leftMatching = findMatching(left, 'right', 'left');
 
-        const createLine = (style) => document.body.append(new Component("div", {
-            classList: ["sticky-line"], style: { position: "absolute", backgroundColor: "var(--color-terminal)", zIndex: 1000, ...style }
-        }).element);
-        const hLine = (value) => createLine({ top: `${value}px`, height: "2px", width: "100vw" });
-        const vLine = (value) => createLine({ top: "0px", height: "100vh", width: "2px", left: `${value}px` });
-        document.querySelectorAll(".sticky-line").forEach(e => e.remove());
+    //     const createLine = (style) => document.body.append(new Component("div", {
+    //         classList: ["sticky-line"], style: { position: "absolute", backgroundColor: "var(--color-terminal)", zIndex: 1000, ...style }
+    //     }).element);
+    //     const hLine = (value) => createLine({ top: `${value}px`, height: "2px", width: "100vw" });
+    //     const vLine = (value) => createLine({ top: "0px", height: "100vh", width: "2px", left: `${value}px` });
+    //     document.querySelectorAll(".sticky-line").forEach(e => e.remove());
 
-        if (topMatching) {
-            const value = findClosestValue([topMatching.top, topMatching.bottom], top);
-            windowDragged.style.top = `${value}px`; hLine(value);
-        }
-        if (bottomMatching) {
-            const value = findClosestValue([bottomMatching.top, bottomMatching.bottom], bottom);
-            windowDragged.style.top = `${value - pxToInt(content.style.height) - 42}px`; hLine(value);
-        }
-        if (rightMatching) {
-            const value = findClosestValue([rightMatching.right, rightMatching.left], right);
-            windowDragged.style.left = `${value - pxToInt(content.style.width) - 2}px`; vLine(value);
-        }
-        if (leftMatching) {
-            const value = findClosestValue([leftMatching.right, leftMatching.left], left);
-            windowDragged.style.left = `${value}px`; vLine(value);
-        }
-    };
+    //     if (topMatching) {
+    //         const value = findClosestValue([topMatching.top, topMatching.bottom], top);
+    //         windowDragged.style.top = `${value}px`; hLine(value);
+    //     }
+    //     if (bottomMatching) {
+    //         const value = findClosestValue([bottomMatching.top, bottomMatching.bottom], bottom);
+    //         windowDragged.style.top = `${value - pxToInt(content.style.height) - 42}px`; hLine(value);
+    //     }
+    //     if (rightMatching) {
+    //         const value = findClosestValue([rightMatching.right, rightMatching.left], right);
+    //         windowDragged.style.left = `${value - pxToInt(content.style.width) - 2}px`; vLine(value);
+    //     }
+    //     if (leftMatching) {
+    //         const value = findClosestValue([leftMatching.right, leftMatching.left], left);
+    //         windowDragged.style.left = `${value}px`; vLine(value);
+    //     }
+    // };
 
     const loadUserInputManager = () => {
         document.body.addEventListener("mousedown", (e) => {
@@ -2124,12 +2153,12 @@
             if (!e.target.classList.contains("context-menu") && !player.input.isShiftDown) removeContextMenu();
             if (e.target.parentNode && e.target.parentNode.classList.contains("item") && ["Computer", "Inventory", "Trade"].includes(windowClicked?.querySelector(".window-title > img")?.alt))
                 manageItemSelection(e.target.parentNode);
-            if (e.target.classList.contains("window-title")) window.addEventListener("mousemove", manageWindowDragged);
+            // if (e.target.classList.contains("window-title")) window.addEventListener("mousemove", manageWindowDragged);
         })
-        document.body.addEventListener("mouseup", () => {
-            document.querySelectorAll(".sticky-line").forEach(e => e.remove());
-            window.removeEventListener("mousemove", manageWindowDragged);
-        })
+        // document.body.addEventListener("mouseup", () => {
+        //     document.querySelectorAll(".sticky-line").forEach(e => e.remove());
+        //     window.removeEventListener("mousemove", manageWindowDragged);
+        // })
         document.body.oncontextmenu = (e) => {
             e.preventDefault();
             manageRightClick(e.target, { clientX: e.clientX, clientY: e.clientY });
@@ -2142,6 +2171,7 @@
     }
 
     const loadStyle = () => {
+        console.log(player.configuration)
         const wc = player.configuration.windowColors;
         const css = `
             .over {transform: scale(1.1, 1.1); border: 2px solid var(--color-terminal);}
@@ -2379,6 +2409,57 @@ any of these keys!
     var divs = {};
     document.querySelectorAll("#desktop-container > div").forEach(div => divs[div.innerText] = div);
 
+    // ======================================== 2spiCore Added Features ========================================
+
+    // ======================================== Daily BTC Changes ========================================
+
+    function createDailyChangeDiv() {
+        const targetLocation = document.querySelector('body > div:nth-child(1) > main > div:nth-child(1) > div:nth-child(2)');
+    
+        const newDiv = document.createElement('div');
+        newDiv.classList.add('topbar-value', 'svelte-1azjldn');
+        newDiv.style.cssText = 'display: flex; flex-direction: column; justify-content: center; align-items: center';
+        newDiv.innerHTML = `
+                            <div style="display: flex; flex-direction: row-reverse; justify-content: center; align-items: center; gap: 0.125rem">
+                                <img class="icon icon-in-text" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgoJPHBhdGggZD0iTTAgMGgxNnYxNkgweiIgZmlsbD0ibm9uZSIgLz4KCTxnIGZpbGw9IiNmNzkzMWEiPgoJCTxwYXRoIGQ9Ik0xLjUgMWEuNS41IDAgMCAxIC41LjVWMTRoMTIuNWEuNS41IDAgMCAxIDAgMWgtMTNhLjUuNSAwIDAgMS0uNS0uNXYtMTNhLjUuNSAwIDAgMSAuNS0uNSIgLz4KCQk8cGF0aCBkPSJNMTMuMDgxIDEuNjA2YTEgMSAwIDEgMSAxLjgzOC43ODhsLTMgN2ExIDEgMCAwIDEtMS40MzQuNDYzTDYuNTU0IDcuNDk4bC0xLjYwNiA0LjgxOGExIDEgMCAxIDEtMS44OTYtLjYzMmwyLTZsLjA0LS4xMDVhMSAxIDAgMCAxIDEuNDIzLS40MzZsNC4wMTcgMi40MXoiIC8+Cgk8L2c+Cjwvc3ZnPgo=">
+                                Daily Earnings
+                            </div>
+                            <p id="daily-btc-diff" style="font-size: 0.875rem;">0.00000000 BTC</p>`;
+
+        targetLocation.insertBefore(newDiv, targetLocation.firstChild.nextSibling);
+    };
+    
+    const getFirstDailyBalance = () => {
+        const container = document.querySelector('body > div > main > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)');
+        const actualBalance = parseFloat(container.textContent.split(' BTC')[0]);
+        let btcStats = player.btcDailyStats;
+        const today = new Date().toLocaleDateString();
+    
+        if (btcStats.date !== today) {
+            btcStats.date = today;
+            btcStats.startBalance = actualBalance;
+            save();
+        };
+        return btcStats.startBalance;
+    };
+
+    const updateDailyBalance = async () => {
+        const changeCounter = document.getElementById('daily-btc-diff');
+        let liveBtcCount = parseFloat(document.querySelector('img[src="icons/btc.svg"]').parentElement.textContent.trim(' BTC'));
+        let btcDiff = (liveBtcCount - getFirstDailyBalance()).toFixed(8);
+
+        while (!changeCounter) 
+            await sleep(200);
+
+        if (btcDiff > 0) {
+            changeCounter.style.color = '#70cf18';
+            changeCounter.textContent = `+${btcDiff} BTC`;
+        } else {
+            changeCounter.style.color = '#eb8282';
+            changeCounter.textContent = `${btcDiff} BTC`;
+        };
+    };
+
     /*  Feature registry: everything the startup sequence loads, in load order.
         To add a feature, write its function above and add an entry here. The loading screen count picks it up automatically.
           name      - text shown on the loading screen
@@ -2394,6 +2475,7 @@ any of these keys!
             name: "Observers", load: createObserver, includes: [
                 "Log observer (hack alerts)", "Window close observer", "Item hover grading",
                 "Window open observer", "Profile BTC display", "Padlet shop button", "Auto loot manager", "Inventory window",
+                "BTC Observer", "BTC Balance changes",
                 "Trade window", "Computer port info", "Filament \"Trade all\" button", "Terminal colorizer",
                 "Settings: auto loot table", "Settings: trade pricing table", "Settings: item manager", "Settings: window colors",
                 "Settings: desktop background", "Hacked window", "Log window", "Target window (copy ID)", "Counter-hack windows",
@@ -2407,13 +2489,14 @@ any of these keys!
         { name: "Default windows", load: openWindows },
         // { name: "Networth calculation", load: calculateNetworth },
         { name: "Networth display", load: createNetworthDiv, includes: ["Networth observer"] },
+        { name: "Daily BTC Earnings display", load: createDailyChangeDiv, includes: ["BTC Balance observer"] },
         { name: "Item swag", load: applyItemSwag },
         { name: "Welcome message", load: async () => { divs["Log"].click(); await sleep(100); editWelcomeMessage(); } },
         { name: "Staff status check", load: () => tryCheckStaffStatus(document.querySelector("main")) },
         { name: "User input manager", load: loadUserInputManager, includes: ["Context menus", "Multi-select", "Window snapping", "Alt hotkeys"] },
         { name: "Inventory window", load: editInventoryWindow, includes: ["Inventory sorting"] },
         { name: "Pretty ports", load: () => prettyPorts() },
-        { name: "Note", load: async () => { await sleep(Math.random() * 2000 + 500); loadNote(); } },
+        // { name: "Note", load: async () => { await sleep(Math.random() * 2000 + 500); loadNote(); } },
     ];
 
     // White feature log in the top left of the loading screen. Its lines live in a shadow root so the document observers never see them.
@@ -2429,8 +2512,8 @@ any of these keys!
 
     (async () => {
         while (document.querySelector("#login-top") || window.location.href !== "https://s0urce.io/")
-            await sleep(Math.random() * 200 + 300);
-        loadingScreen("create", "Prettier s0urce");
+            await sleep(500);
+        loadingScreen("create", "2spiCore");
         const log = loadingLog();
         const total = features.reduce((sum, feature) => sum + 1 + (feature.includes?.length || 0), 0);
         log(`Loading ${total} features...`);
