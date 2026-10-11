@@ -12,7 +12,7 @@
 
 (function () {
     'use strict';
-    const VERSION = "1.0.0"
+    const VERSION = "1.0.1"
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
