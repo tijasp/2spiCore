@@ -1747,13 +1747,11 @@
             .replace(">.", `>. <br><span style='font-size: 0.8rem; color: var(--color-lightgrey);'>Template made by <span style='color: pink; text-shadow: 0 0 3px pink'>Xen0o2 & d0t</span>.</span>`);
         sendLog(`
             <div style="color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7; letter-spacing: 0.3px; font-weight: lighter; margin-bottom: 8px;">
-                New In 1.11.X:
+                New In ${VERSION}:
             </div>
 ` + [
-            ["354993/firewall", "#f75252", "True Port Health"],
-            ["532323/lock-alt", "#52e7f7", "Characters Per Port-generated Word"],
-            ["322503/healing", "#52e7f7", "True Port Health Recovery Per Minute"],
-            ["506534/percentage", "#52e7f7", "Port Scores"],
+            ["/510901/check", "#f75252", "Alt Accounts Support"],
+            ["532323/lock-alt", "#52e7f7", "Displaying Daily BTC Earnings"],
         ].map(([icon, color, text]) => `            <div style="display: flex; align-items: center; gap: 8px; margin: 6px 0;">
                 <img class="icon" src="https://www.svgrepo.com/show/${icon}.svg" style="filter: drop-shadow(50px 0px 100px ${color}) invert(96%) sepia(95%) saturate(7486%) hue-rotate(143deg) brightness(100%) contrast(94%);"></img>
                 <span>${text}</span>
