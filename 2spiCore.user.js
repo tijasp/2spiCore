@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2spiCore
-// @version      1.0.2
+// @version      1.0.21
 // @description  d0urce Fork
 // @author       2spi & d0t
 // @match        https://s0urce.io/
@@ -12,7 +12,7 @@
 
 (function () {
     'use strict';
-    const VERSION = "1.0.2"
+    const VERSION = "1.0.21"
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
@@ -204,7 +204,7 @@
         [rarity, Object.fromEntries(["cpu", "gpu", "psu", "firewall", "other"].map(type => [type, value(i)]))]));
 
     let player = {
-        username: document.querySelector("img[src='icons/online.svg']")?.parentNode?.innerText?.trim(),
+        username: "",
         hacksInProgress: [], currentlyHacking: null, lastHacked: null,
         configuration: {
             openInSilent: [],
@@ -213,7 +213,7 @@
             desktopIconSize: "",
             backgroundImage: null,
             currentTheme: Object.keys(themes)[0],
-            windowColors: { windowBorder: "#91aabd3b", windowTabLight: "#1f1e23", windowTabDark: "#131317" },
+            windowColors: defaultColors,
         },
         input: { isShiftDown: false },
         staffRole: "",
@@ -464,7 +464,7 @@
                             style: { position: "absolute", left: 0, height: "100%", width: "100%", opacity: "0" },
                             onchange: (e) => {
                                 player.configuration.currentTheme = e.target.value;
-                                save()
+                                save();
                                 document.querySelector("#selected-theme").innerText = e.target.value;
                                 updateThemeStyle();
                             },
@@ -1490,10 +1490,11 @@
             })
 
             const setWindowColor = (color) => {
-                player.configuration.windowColors = { windowBorder: color, windowTabLight: color, windowTabDark: halfColor(color) }
+                player.configuration.windowColors = { windowBorder: color, windowTabLight: color, windowTabDark: halfColor(color) };
                 save();
                 loadStyle();
             };
+
             const textInputStyle = { padding: "10px", borderRadius: "2px", textAlign: "left", backgroundColor: "var(--color-grey)", boxShadow: "0 10px 20px var(--color-shadow) inset", border: "1px solid var(--color-lightgrey)", fontFamily: "var(--font-family-2)", zIndex: "60" };
             const tabColorSetting = new Component("div", {
                 classList: ["el", "svelte-176ijne"],
@@ -2612,7 +2613,13 @@ any of these keys!
         });
 
         save();
-    }
+    };
+
+    const getUsername = async () => {
+        while (!player.username)
+            player.username = document.querySelector("img[src='icons/online.svg']")?.parentNode?.innerText?.trim();
+            await sleep(200);
+    };
 
     /*  Feature registry: everything the startup sequence loads, in load order.
         To add a feature, write its function above and add an entry here. The loading screen count picks it up automatically.
@@ -2636,6 +2643,7 @@ any of these keys!
             ]
         },
         { name: "Progress bar resize", load: editProgressBar },
+        { name: "Getting username", load: getUsername },
         { name: "Saved settings", load: loadLocalStorage },
         { name: "Theme style", load: updateThemeStyle },
         { name: "Custom style", load: loadStyle },
