@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2spiCore
-// @version      1.0.21
+// @version      1.1.0
 // @description  d0urce Fork
 // @author       2spi & d0t
 // @match        https://s0urce.io/
@@ -12,7 +12,7 @@
 
 (function () {
     'use strict';
-    const VERSION = "1.0.21"
+    const VERSION = "1.1.0";
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
@@ -356,7 +356,69 @@
         holdoutRange: {
             WORST_HOLDOUT: 2.269,
             BEST_HOLDOUT: 20.053
-        }
+        },
+        // official dev-confirmed rates
+        raw_item_drop_values: {
+            "cpu": 250,
+            "gpu": 250,
+            "psu": 250,
+            "router": 250,
+            "other": 3
+        },
+        // NPC profiles are legendary 90% of the time and 10% mythic
+        npc_profile_weights: {
+            "legendary": 0.9,
+            "mythic": 0.1
+        },
+        // since official drop weights are unknown, we are basing things off community research (6000+ drop data)
+        // last updated 10/10/26
+        rarity_weights: [
+            // Name, prem, level, common, uncommon, rare, epic, legendary, mythic
+            ["Botnet", false, 1, 0.81657, 0.18343, 0, 0, 0, 0],
+            ["Cipher", false, 1, 0.80822, 0.19178, 0, 0, 0, 0],
+            ["Gill Bates", false, 5, 0.74576, 0.25424, 0, 0, 0, 0],
+            ["Zucc", false, 5, 0.78142, 0.21858, 0, 0, 0, 0],
+            ["Syry", false, 10, 0.73295, 0.22727, 0.03977, 0, 0, 0],
+            ["Gary Host", false, 15, 0.62778, 0.30556, 0.06667, 0, 0, 0],
+            ["G4ymer69", false, 20, 0.66154, 0.29744, 0.04103, 0, 0, 0],
+            ["Tim Dotnet", false, 25, 0.57718, 0.32886, 0.09396, 0, 0, 0],
+            ["Dread", false, 30, 0.51266, 0.31013, 0.13291, 0.0443, 0, 0],
+            ["Goth Girl B", false, 35, 0.52439, 0.27439, 0.15854, 0.04268, 0, 0],
+            ["Elrond", false, 40, 0.35632, 0.32184, 0.24138, 0.08046, 0, 0],
+            ["Discord Mod", false, 80, 0, 0.21579, 0.42105, 0.32105, 0.03684, 0.00526],
+            ["Mr. D", false, 90, 0, 0.32051, 0.35897, 0.26282, 0.03846, 0.01923],
+            ["1337", false, 1, 0.73077, 0.26923, 0, 0, 0, 0],
+            ["Botnet", false, 1, 0.77647, 0.22353, 0, 0, 0, 0],
+            ["Cipher", false, 1, 0.8125, 0.1875, 0, 0, 0, 0],
+            ["Gill Bates", false, 5, 0.70115, 0.29885, 0, 0, 0, 0],
+            ["Alphastop", false, 5, 0.8, 0.2, 0, 0, 0, 0],
+            ["Zucc", false, 5, 0.76842, 0.23158, 0, 0, 0, 0],
+            ["Alex", false, 10, 0.54217, 0.38554, 0.07229, 0, 0, 0],
+            ["Syry", false, 10, 0.62105, 0.31579, 0.06316, 0, 0, 0],
+            ["Trinity", false, 15, 0.5443, 0.44304, 0.01266, 0, 0, 0],
+            ["Gary Host", false, 15, 0.53922, 0.38235, 0.07843, 0, 0, 0],
+            ["Ne-o", false, 20, 0.41333, 0.46667, 0.12, 0, 0, 0],
+            ["G4ymer69", false, 20, 0.58667, 0.36, 0.05333, 0, 0, 0],
+            ["Tim Dotnet", false, 25, 0.44776, 0.41791, 0.13433, 0, 0, 0],
+            ["Dread", false, 30, 0.36, 0.45333, 0.16, 0.02667, 0, 0],
+            ["Goth Girl A", false, 35, 0.32673, 0.40594, 0.18812, 0.07921, 0, 0],
+            ["Goth Girl B", false, 35, 0.42683, 0.37805, 0.10976, 0.08537, 0, 0],
+            ["Goth Girl C", false, 35, 0.26733, 0.40594, 0.25743, 0.06931, 0, 0],
+            ["The Juice", false, 35, 0.34286, 0.4, 0.18095, 0.07619, 0, 0],
+            ["Elrond", false, 40, 0.18644, 0.5, 0.20339, 0.11017, 0, 0],
+            ["Chad GPT", false, 45, 0.21667, 0.43333, 0.26667, 0.08333, 0, 0],
+            ["Fishstock", false, 50, 0.1117, 0.40426, 0.31915, 0.13298, 0.03191, 0],
+            ["Hacker Girl", false, 55, 0.14815, 0.33862, 0.35979, 0.14286, 0.01058, 0],
+            ["Anonymous", false, 60, 0, 0.34031, 0.32461, 0.29843, 0.03665, 0],
+            ["Dr. Klaus", false, 65, 0, 0.31351, 0.41081, 0.23243, 0.04324, 0],
+            ["H.A.I. 10000", false, 70, 0, 0.33333, 0.38798, 0.2459, 0.03279, 0],
+            ["Great Firewall", false, 75, 0, 0.2663, 0.45652, 0.23913, 0.03804, 0],
+            ["Discord Mod", false, 80, 0, 0.2598, 0.36765, 0.34314, 0.02451, 0.0049],
+            ["Big Brother", false, 80, 0, 0.31414, 0.38743, 0.26178, 0.03141, 0.00524],
+            ["The Matrix", false, 85, 0, 0.31111, 0.34444, 0.32222, 0.01667, 0.00556],
+            ["Mr. D", false, 90, 0, 0.25, 0.39623, 0.32547, 0.02358, 0.00472],
+            ["Skynet", false, 90, 0, 0.21134, 0.39691, 0.36082, 0.02577, 0.00515]
+        ]
     };
 
     // Export stats and helper functions for access outside the IIFE
@@ -750,18 +812,21 @@
         var diff = type == 'cpu' ? stats.cpu_dPD[rarity] : type == 'gpu' ? stats.gpu_dPD[rarity] : type == 'psu' ? stats.psu_dPD[rarity] : type == 'router' ? stats.fire_dPD[rarity] : value;
         diff = (diff + 1) / 2
         switch (rarity) {
-            case 5:
-                if (dPM > 1) return Math.max((value + basePrice * 3 - 1.928 * (dPM - 1) ** (1 / 2)) / 1.5 * diff, value).toFixed(2) + "~" + Math.max((value * 2 + basePrice + basePrice * 2 * 4 - 3 * (dPM - 1) ** (2 / 3)) / 2 * diff, value * 1.5).toFixed(2);
-                else if (dPM > 0) return ((value * 2 + basePrice * 3) * diff).toFixed(2) + "+"
+            // Mythics are irrelevant now, no special treatment
+            //case 5:
+            //    if (dPM > 1) return Math.max((value + basePrice * 3 - 1.928 * (dPM - 1) ** (1 / 2)) / 1.5 * diff, value).toFixed(2) + "~" + Math.max((value * 2 + basePrice + basePrice * 2 * 4 - 3 * (dPM - 1) ** (2 / 3)) / 2 * diff, value * 1.5).toFixed(2);
+            //    else if (dPM > 0) return ((value * 2 + basePrice * 3) * diff).toFixed(2) + "+"
             case 6:
-                if (dPM == 100) return (value).toFixed(4);
-                else if (dPM > 50) return Math.max((value + basePrice * 0.5 + 0.5 - 1.7 * (dPM - 50) ** (2 / 3)) * diff, value).toFixed(2) + "~" + (value * 1.5).toFixed(2);
-                else if (dPM > 1) return Math.max((value + basePrice * 3 - 16 * (dPM - 1) ** (1 / 2)) * diff, value).toFixed(2) + "~" + Math.max((value / 45 * 68 + basePrice / 45 * 68 * 4 - 20.3 * (dPM - 1) ** (2 / 3)) * diff, value * 1.5).toFixed(2);
-                else if (dPM > 0) return ((value / 45 * 68 + basePrice / 45 * 68 * 4 - 20.3 * (dPM - 1) ** (2 / 3)) * diff).toFixed(2);
+                if (dPM == 100) return (value).toFixed(2);
+                else if (dPM > 30) return (value).toFixed(2) + "~" + (value * 1.5).toFixed(2);
+                // premiums over value / 1.5 * value fade to 0 at dPM 30 (meeting the branch above); Lv1 1p = 1.5 * 36 + 41 / 6 * 36 = 300 BTC at diff 1
+                else if (dPM > 1) return (value + basePrice * 3 * (1 - ((dPM - 1) / 29) ** (1 / 2)) * diff).toFixed(2) + "~" + (value * 1.5 + basePrice * 41 / 6 * (1 - ((dPM - 1) / 29) ** (2 / 3)) * diff).toFixed(2);
+                else if (dPM > 0) return (value * 1.5 + basePrice * 41 / 6 * diff).toFixed(2);
             default:
-                if (dPM > 30) return (value).toFixed(4) + "~" + (value * 1.5).toFixed(4);
-                else if (dPM > 1) return Math.max((value + basePrice - 4.3 * basePrice / 30 * (dPM - 1) ** (1 / 2)) * diff, value).toFixed(4) + "~" + Math.max((value * 2 + basePrice * 2 - 4.3 * basePrice / 30 * (dPM - 1) ** (2 / 3)) * diff, value * 1.5).toFixed(4);
-                else if (dPM > 0) return ((value * 2 + basePrice * 2 - 4.3 * basePrice / 30 * (dPM - 1) ** (2 / 3)) * diff).toFixed(4) + "+";
+                if (dPM > 10) return (value).toFixed(2) + "~" + (value * 1.5).toFixed(2);
+                // same shape, fading to 0 at dPM 10; 1p is the top of the range as dPM -> 1, so there's no jump between 1p and 2p
+                else if (dPM > 1) return (value + (value + basePrice * 2) * (1 - ((dPM - 1) / 9) ** (1 / 2)) * diff).toFixed(2) + "~" + (value * 1.5 + (value * 1.5 + basePrice * 3) * (1 - ((dPM - 1) / 9) ** (2 / 3)) * diff).toFixed(2);
+                else if (dPM > 0) return (value * 1.5 + (value * 1.5 + basePrice * 3) * diff).toFixed(2) + "+";
                 // If there's no estimated price for it, chances are it's worth a lot
                 else return "Invaluable";
         }
@@ -803,7 +868,7 @@
         const worstHoldout = penTest(worstPort, cpuV, worstPort[3] / cpsAverage + .3);
         const actualHoldout = penTest([hp, rd, rg], cpuV, enc / cpsAverage + .3);
         const fireRank = 1 + ((worstHoldout - actualHoldout) / (worstHoldout - bestHoldout) * 9);
-        return fireRank < 1 || fireRank > 10 ? -1 : fireRank; // out of range should be impossible
+        return fireRank < 1 ? -1 : Math.min(fireRank, 10); // above 10 (stronger than bestPort) caps to 10, which dPM gives percentile 0
     }
 
     const hackPower = (hack, trueDam, pen, chance, dam) => {
@@ -847,7 +912,7 @@
             case "cpu": return percentile(grade, stats.cpu_dPM[rarity])
             case "gpu": return percentile(grade, stats.gpu_dPM[rarity])
             case "psu": return percentile(grade, stats.psu_dPM)
-            case "router": return percentile(grade, stats.fire_dPM[rarity])
+            case "router": return grade >= 10 ? 0 : percentile(grade, stats.fire_dPM[rarity])
         }
     }
     const dCPS = (type, rarity, mint, premium) => {
@@ -896,9 +961,38 @@
         }
     }
 
+    // dropRatesOverlay: hovering a "Possible Drops" item of an NPC Target masks the #desc image with its drop chances
+    const dropRatesOverlay = (description) => {
+        // drops are the .item icons in #top-wrapper's sibling div ("Possible Drops"), in both the Target window and its preview variant
+        const hovered = document.querySelector("#top-wrapper ~ div .item:hover img");
+        const target = hovered?.closest("#top-wrapper ~ div").parentNode;
+        if (target?.querySelector("#top-wrapper > div > div:nth-child(2) > div:nth-child(2) > div")?.innerText != "NPC") return;
+        if (hovered.alt != description.querySelector("h4")?.innerText + " Icon") return;
+        const drops = Array.from(target.querySelectorAll("#top-wrapper ~ div .item img"));
+        const values = stats.raw_item_drop_values;
+        const typeOf = img => img.src.match(/([^\/]+?)(-s)?\.webp/)?.[1];
+        const valueOf = img => typeOf(img) in values ? values[typeOf(img)] : values.other;
+        const total = drops.reduce((sum, img) => sum + valueOf(img), 0);
+        const rarity = getItemRarityScore(description.querySelector(".rarity"));
+        const npc = target.querySelector("#top-wrapper > div > div:nth-child(2) > div:nth-child(1) > div")?.innerText;
+        const rows = stats.rarity_weights.filter(row => row[0] == npc);
+        // skips anything that would round to 0.00% (and NaN when the NPC has no rarity_weights rows)
+        const line = (chance, label, i) => !(chance >= 0.00005) ? "" :
+            `<div style="color: ${i == null ? "white" : lootRarity[i].color.match(/#\w{6}/g)[1]};">${(chance * 100).toFixed(2)}% ${label} Chance</div>`;
+        let lines = line(valueOf(hovered) / total, "Drop");
+        if (valueOf(hovered) != values.other) lines += rarities.slice(0, 6).map((r, i) => line(rows.reduce((sum, row) => sum + row[i + 3], 0) / rows.length, capitalize(r), i)).join("");
+        else if (rarities[rarity] == "mythic") lines += Object.entries(stats.npc_profile_weights).map(([r, w]) => line(w, capitalize(r), rarities.indexOf(r))).join("");
+        const icon = description.querySelector("#item-icon");
+        icon.querySelector("img").style.filter = "blur(5px)";
+        Object.assign(icon.style, { position: "relative", overflow: "hidden" });
+        icon.insertAdjacentHTML("beforeend", `<div style="position: absolute; inset: 0; background: ${lootRarity[rarity]?.color}; opacity: 0.6;"></div>
+            <div style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; line-height: 1.5; font-weight: 600; text-shadow: 0 0 2px #000, 0 0 4px #000, 0 0 8px #000, 0 0 12px #000;">${lines}</div>`);
+    }
+
     const itemHoverObserver = new MutationObserver(function (mutations) {
         const description = mutations.find(e => e.addedNodes.length == 1 && e.addedNodes[0].id == "desc" && e.addedNodes[0].classList?.contains("svelte-181npts"))?.addedNodes[0]
         if (!description) return;
+        dropRatesOverlay(description);
 
         const premium = !!description.querySelector("div:nth-child(2) > img");
         const mint = parseInt(description.querySelector("div:nth-child(2) > div").innerText.split(" by")[0].substr(1));
@@ -939,9 +1033,8 @@
         description.style.width = "300px";
 
         const percentile = dPM(standardGrade, index, type);
-        const suffix = [[3, "rd"], [2, "nd"], [1, "st"]].find(([n]) => percentile == n || (percentile > 20 && percentile % 10 == n))?.[1];
-        if (suffix) description.querySelector(".rarity").innerText = percentile + suffix + " Percentile";
-        description.querySelector(".rarity").innerHTML = `${percentile}th Percentile <span style="font-size: 0.8rem">v${VERSION}</span>`;
+        const suffix = [[3, "rd"], [2, "nd"], [1, "st"]].find(([n]) => percentile == n || (percentile > 20 && percentile % 10 == n))?.[1] || "th";
+        description.querySelector(".rarity").innerHTML = `${percentile}${suffix} Percentile <span style="font-size: 0.8rem">v${VERSION}</span>`;
 
         const price = dPS(percentile, level, index, type)
         description.querySelector(".level")?.parentNode.insertBefore(gradeComponent.element, description.querySelector(".effect"));
@@ -1751,12 +1844,14 @@
             .replace(">.", `>. <br><span style='font-size: 0.8rem; color: var(--color-lightgrey);'>Template made by <span style='color: pink; text-shadow: 0 0 3px pink'>Xen0o2 & d0t</span>.</span>`);
         sendLog(`
             <div style="color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7; letter-spacing: 0.3px; font-weight: lighter; margin-bottom: 8px;">
-                New In ${VERSION}:
+                New In 1.1.0:
             </div>
         ` + [
             ["/510901/check", "#f75252", "Alt Accounts Support"],
             ["532323/lock-alt", "#52e7f7", "Displaying Daily BTC Earnings"],
             ["446742/statistics", "#f75252", "NPC Drop Rates Statistics"],
+            ["506534/percentage", "#f75252", "Item Window Drop Rates (d0urce update)"],
+            ["308635/home-value-house-price-home-price-house-value", "#52e7f7", "Networth Corrections  (d0urce update)"],
         ].map(([icon, color, text]) => `            <div style="display: flex; align-items: center; gap: 8px; margin: 6px 0;">
                 <img class="icon" src="https://www.svgrepo.com/show/${icon}.svg" style="filter: drop-shadow(50px 0px 100px ${color}) invert(96%) sepia(95%) saturate(7486%) hue-rotate(143deg) brightness(100%) contrast(94%);"></img>
                 <span>${text}</span>
@@ -2634,7 +2729,7 @@ any of these keys!
         { name: "Custom terminal bar", load: customTerminal },
         {
             name: "Observers", load: createObserver, includes: [
-                "Log observer (hack alerts)", "Window close observer", "Item hover grading",
+                "Log observer (hack alerts)", "Window close observer", "Item hover grading", "Drop rates overlay",
                 "Window open observer", "Profile BTC display", "Padlet shop button", "Auto loot manager", "Inventory window",
                 "BTC Observer", "BTC Balance changes",
                 "Trade window", "Computer port info", "Filament \"Trade all\" button", "Terminal colorizer",
