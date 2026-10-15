@@ -2528,6 +2528,9 @@ any of these keys!
 
     // ======================================== 2spiCore Added Features ========================================
 
+    function formatNumber(number) {
+        return number > 1000 ? `${(number / 1000).toFixed(2)}k` : number;
+    };
 
     // ======================================== Daily BTC Changes ========================================
 
@@ -2646,7 +2649,7 @@ any of these keys!
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center">
                     <span style="font-size: 1rem; color: #aaaaaa">Rarity distribution</span>
-                    <span style="font-size: 1rem; color: #aaaaaa">Total: <span id="total-drops">${player.drops.npc['total']}</span></span>
+                    <span style="font-size: 1rem; color: #aaaaaa">Total: <span id="total-drops">${formatNumber(player.drops.npc['total'])}</span></span>
                 </div>
                 <div id="dropRates-distributionBar" style="display: flex; width: 100%; height: 10px; background: #303030; border-radius: 0.5rem; overflow: hidden; margin-top: 0.225rem">
                     ${insertDropRateStatsBar('npc')}
@@ -2727,7 +2730,7 @@ any of these keys!
                         <span style="font-size: 1.25rem; font-weight: 600; color: white">${capitalize(r.name)}</span>
                     </div>
                     <span id="${r.name}-stats-rate" style="grid-column-start: 3; font-size: 1.25rem; font-weight: 600; color: white; min-width: 65px; text-align: right">${dropRate}%</span>
-                    <span id="${r.name}-stats-count" style="grid-column-start: 4; font-size: 1.25rem; color: #aaaaaa; min-width: 30px; text-align: right">${count}</span>
+                    <span id="${r.name}-stats-count" style="grid-column-start: 4; font-size: 1.25rem; color: #aaaaaa; min-width: 30px; text-align: right">${formatNumber(count)}</span>
             `;
         }).join('');
     };
@@ -2787,7 +2790,7 @@ any of these keys!
     };
 
     const updateDropRateStatsWindow = (type) => {
-        document.getElementById('total-drops').textContent = player.drops[type]['total'];
+        document.getElementById('total-drops').textContent = formatNumber(player.drops[type].total);
         document.getElementById('dropRates-statsRows').innerHTML = insertDropRateStatsRows(type);
         document.getElementById('dropRates-distributionBar').innerHTML = insertDropRateStatsBar(type);
 
