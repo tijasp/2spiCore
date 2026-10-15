@@ -1855,12 +1855,12 @@
             .replace(">.", `>. <br><span style='font-size: 0.8rem; color: var(--color-lightgrey);'>Template made by <span style='color: pink; text-shadow: 0 0 3px pink'>Xen0o2 & d0t</span>.</span>`);
         sendLog(`
             <div style="color: #52e7f7; text-shadow: 0 0 2px #0fa, 0 0 3px #52e7f7; letter-spacing: 0.3px; font-weight: lighter; margin-bottom: 8px;">
-                New In 1.1.0:
+                New In 1.1.X:
             </div>
         ` + [
             ["/510901/check", "#f75252", "Alt Accounts Support"],
             ["532323/lock-alt", "#52e7f7", "Displaying Daily BTC Earnings"],
-            ["446742/statistics", "#f75252", "NPC Drop Rates Statistics"],
+            ["446742/statistics", "#f75252", "NPC/Agents Drop Rates Statistics"],
             ["506534/percentage", "#f75252", "Item Window Drop Rates (d0urce update)"],
             ["308635/home-value-house-price-home-price-house-value", "#52e7f7", "Networth Corrections  (d0urce update)"],
         ].map(([icon, color, text]) => `            <div style="display: flex; align-items: center; gap: 8px; margin: 6px 0;">
