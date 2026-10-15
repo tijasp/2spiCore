@@ -2640,24 +2640,50 @@ any of these keys!
         dropRateStats.id = 'dropRates-tab'
         dropRateStats.innerHTML = `
             <div class='window-content svelte-1hjm43z' style='padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem'>
-            <div style="background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 0.5rem; padding: 1rem; color: white">
-                <div style="font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 1rem">Drop Rates Statistics</div>
-                <div style="display: flex; background: #252525; border-radius: 0.5rem; padding: 0.250rem; margin-bottom: 1rem; gap: 0.25rem">
-                    <button id="npc-stats-tab" style="flex: 1; padding: 0.5rem; background: #454545; border: none; border-radius: 0.25rem; color: white; cursor: pointer; font-weight: 600; font-size: 1.125rem">NPC</button>
-                    <button id="filaments-stats-tab" style="flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 0.25rem; color: #aaaaaa; cursor: pointer; font-weight: 600; font-size: 1.125rem">Filaments</button>
-                    <button id="components-stats-tab" style="flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 0.25rem; color: #aaaaaa; cursor: pointer; font-weight: 600; font-size: 1.125rem">Components</button>
+                <div style="background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 0.5rem; padding: 1rem; color: white">
+                    <div style="font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 1rem">Drop Rates Statistics</div>
+                    <div style="display: flex; background: #252525; border-radius: 0.5rem; padding: 0.250rem; margin-bottom: 1rem; gap: 0.25rem">
+                        <button id="npc-stats-button" style="flex: 1; padding: 0.5rem; background: #454545; border: none; border-radius: 0.25rem; color: white; cursor: pointer; font-weight: 600; font-size: 1.125rem">NPC</button>
+                        <button id="filaments-stats-button" style="flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 0.25rem; color: #aaaaaa; cursor: pointer; font-weight: 600; font-size: 1.125rem">Filaments</button>
+                        <button id="components-stats-button" style="flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 0.25rem; color: #aaaaaa; cursor: pointer; font-weight: 600; font-size: 1.125rem">Components</button>
+                    </div>
+                    <div id="npc-stats-tab">
+                        <div style="display: flex; justify-content: space-between; align-items: center">
+                            <span style="font-size: 1rem; color: #aaaaaa">Rarity distribution</span>
+                            <span style="font-size: 1rem; color: #aaaaaa">Total: <span id="npc-total-drops">${formatNumber(player.drops.npc['total'])}</span></span>
+                        </div>
+                        <div id="npc-distributionBar" style="display: flex; width: 100%; height: 10px; background: #303030; border-radius: 0.5rem; overflow: hidden; margin-top: 0.225rem">
+                            ${insertDropRateStatsBar('npc')}
+                        </div>
+                        <div id="npc-statsRows" style="display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; column-gap: 0.5rem; row-gap: 0.5rem; margin-top: 1.25rem">
+                            ${insertDropRateStatsRows('npc')}
+                        </div>
+                    </div>
+                    <div id="filaments-stats-tab" style="display: none">
+                        <div style="display: flex; justify-content: space-between; align-items: center">
+                            <span style="font-size: 1rem; color: #aaaaaa">Rarity distribution</span>
+                            <span style="font-size: 1rem; color: #aaaaaa">Total: <span id="filaments-total-drops">${formatNumber(player.drops.filaments['total'])}</span></span>
+                        </div>
+                        <div id="filaments-distributionBar" style="display: flex; width: 100%; height: 10px; background: #303030; border-radius: 0.5rem; overflow: hidden; margin-top: 0.225rem">
+                            ${insertDropRateStatsBar('filaments')}
+                        </div>
+                        <div id="filaments-statsRows" style="display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; column-gap: 0.5rem; row-gap: 0.5rem; margin-top: 1.25rem">
+                            ${insertDropRateStatsRows('filaments')}
+                        </div>
+                    </div>
+                    <div id="components-stats-tab" style="display: none">
+                        <div style="display: flex; justify-content: space-between; align-items: center">
+                            <span style="font-size: 1rem; color: #aaaaaa">Rarity distribution</span>
+                            <span style="font-size: 1rem; color: #aaaaaa">Total: <span id="components-total-drops">${formatNumber(player.drops.components['total'])}</span></span>
+                        </div>
+                        <div id="components-distributionBar" style="display: flex; width: 100%; height: 10px; background: #303030; border-radius: 0.5rem; overflow: hidden; margin-top: 0.225rem">
+                            ${insertDropRateStatsBar('components')}
+                        </div>
+                        <div id="components-statsRows" style="display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; column-gap: 0.5rem; row-gap: 0.5rem; margin-top: 1.25rem">
+                            ${insertDropRateStatsRows('components')}
+                        </div>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center">
-                    <span style="font-size: 1rem; color: #aaaaaa">Rarity distribution</span>
-                    <span style="font-size: 1rem; color: #aaaaaa">Total: <span id="total-drops">${formatNumber(player.drops.npc['total'])}</span></span>
-                </div>
-                <div id="dropRates-distributionBar" style="display: flex; width: 100%; height: 10px; background: #303030; border-radius: 0.5rem; overflow: hidden; margin-top: 0.225rem">
-                    ${insertDropRateStatsBar('npc')}
-                </div>
-                <div id="dropRates-statsRows" style="display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; column-gap: 0.5rem; row-gap: 0.5rem; margin-top: 1.25rem">
-                    ${insertDropRateStatsRows('npc')}
-                </div>
-            </div>
             </div>`;
 
 
@@ -2702,16 +2728,16 @@ any of these keys!
             statsWindow.style.display = 'none';
         });
 
-        document.getElementById('npc-stats-tab').addEventListener('click', () => {
-            updateDropRateStatsWindow('npc');
+        document.getElementById('npc-stats-button').addEventListener('click', () => {
+            updateDropRateStatsTab('npc');
         });
 
-        document.getElementById('filaments-stats-tab').addEventListener('click', () => {
-            updateDropRateStatsWindow('filaments');
+        document.getElementById('filaments-stats-button').addEventListener('click', () => {
+            updateDropRateStatsTab('filaments');
         });
         
-        document.getElementById('components-stats-tab').addEventListener('click', () => {
-            updateDropRateStatsWindow('components');
+        document.getElementById('components-stats-button').addEventListener('click', () => {
+            updateDropRateStatsTab('components');
         });
     };
 
@@ -2790,17 +2816,22 @@ any of these keys!
     };
 
     const updateDropRateStatsWindow = (type) => {
-        document.getElementById('total-drops').textContent = formatNumber(player.drops[type].total);
-        document.getElementById('dropRates-statsRows').innerHTML = insertDropRateStatsRows(type);
-        document.getElementById('dropRates-distributionBar').innerHTML = insertDropRateStatsBar(type);
+        document.getElementById(`${type}-total-drops`).textContent = formatNumber(player.drops[type].total);
+        document.getElementById(`${type}-statsRows`).innerHTML = insertDropRateStatsRows(type);
+        document.getElementById(`${type}-distributionBar`).innerHTML = insertDropRateStatsBar(type);
+    };
 
+    const updateDropRateStatsTab = (type) => {
         const dropRatesTab = ['npc', 'filaments', 'components'];
+        
         dropRatesTab.forEach(tab => {
-            const button = document.getElementById(`${tab}-stats-tab`);
+            const statTab = document.getElementById(`${tab}-stats-tab`);
+            const button = document.getElementById(`${tab}-stats-button`);
             const active = tab === type;
     
             button.style.background = active ? '#454545' : 'transparent';
             button.style.color = active ? 'white' : '#aaaaaa';
+            statTab.style.display = active ? 'block' : 'none';
         });
     };
 
