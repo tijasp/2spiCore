@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2spiCore
-// @version      1.1.2
+// @version      1.1.21
 // @description  d0urce Fork
 // @author       2spi & d0t
 // @match        https://s0urce.io/
@@ -12,7 +12,7 @@
 
 (function () {
     'use strict';
-    const VERSION = "1.1.2";
+    const VERSION = "1.1.21";
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
