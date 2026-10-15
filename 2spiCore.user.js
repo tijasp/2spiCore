@@ -203,6 +203,8 @@
     const perRarity = (list, value) => Object.fromEntries(list.map((rarity, i) =>
         [rarity, Object.fromEntries(["cpu", "gpu", "psu", "firewall", "other"].map(type => [type, value(i)]))]));
 
+    let currentBtcPrice = null;
+
     let player = {
         username: null,
         hacksInProgress: [], currentlyHacking: null, lastHacked: null,
@@ -1058,6 +1060,9 @@
 
     const btcBalanceObserver = new MutationObserver(() => {
         updateDailyBalance();
+        if (currentBtcPrice) {
+            updateBtcToUsdConverter();
+        };
     });
 
     let manageLoot = async () => {
@@ -2528,8 +2533,24 @@ any of these keys!
 
     // ======================================== 2spiCore Added Features ========================================
 
+    // ======================================== Utils ========================================
+
     function formatNumber(number) {
+        if (number >= 1000000) return `${(number / 1000000).toFixed(2)}M`;
         return number > 1000 ? `${(number / 1000).toFixed(2)}k` : number;
+    };
+
+    const getCurrentBtcPrice = async () => {
+        try {
+          const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
+          const currentPrice = await response.json();
+          currentBtcPrice = currentPrice['bitcoin']['usd'];
+        } catch (error) {
+          console.error('Impossible to fetch API: ', error);
+        };
     };
 
     // ======================================== Daily BTC Changes ========================================
@@ -2564,9 +2585,18 @@ any of these keys!
         return btcStats.startBalance;
     };
 
+    const updateBtcToUsdConverter = () => {
+        const container = document.querySelector('body > div > main > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)');
+        const usdCount = container.parentElement.querySelector('div:nth-child(2) > div:nth-child(1)');
+        const actualBalance = parseFloat(container.textContent.split(' BTC')[0]);
+
+        const convertedBtc = currentBtcPrice * actualBalance;
+        usdCount.textContent = '$' + formatNumber(convertedBtc);
+    };
+
     const updateDailyBalance = async () => {
         const changeCounter = document.getElementById('daily-btc-diff');
-        let liveBtcCount = parseFloat(document.querySelector('img[src="icons/btc.svg"]').parentElement.textContent.trim(' BTC'));
+        let liveBtcCount = parseFloat(document.querySelector('img[src="icons/btc.svg"]').parentElement.textContent.split(' BTC')[0]);
         let btcDiff = (liveBtcCount - getFirstDailyBalance()).toFixed(8);
 
         while (!changeCounter) 
@@ -2883,6 +2913,7 @@ any of these keys!
         { name: "Agents looting listener", load: agentListener },
         { name: "Statistics display", load: createStatisticsWindow, includes: ["Loot observer", "Agents looting listener"] },
         { name: "Daily BTC Earnings display", load: createDailyChangeDiv, includes: ["BTC Balance observer"] },
+        { name: "Get current BTC price", load: getCurrentBtcPrice },
         { name: "Item swag", load: applyItemSwag },
         { name: "Welcome message", load: async () => { divs["Log"].click(); await sleep(100); editWelcomeMessage(); } },
         { name: "Checking last version", load: checkVersion },
