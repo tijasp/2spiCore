@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2spiCore
-// @version      1.1.0
+// @version      1.1.2
 // @description  d0urce Fork
 // @author       2spi & d0t
 // @match        https://s0urce.io/
@@ -12,7 +12,7 @@
 
 (function () {
     'use strict';
-    const VERSION = "1.1.0";
+    const VERSION = "1.1.2";
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
@@ -204,7 +204,7 @@
         [rarity, Object.fromEntries(["cpu", "gpu", "psu", "firewall", "other"].map(type => [type, value(i)]))]));
 
     let player = {
-        username: "",
+        username: null,
         hacksInProgress: [], currentlyHacking: null, lastHacked: null,
         configuration: {
             openInSilent: [],
@@ -227,23 +227,34 @@
         },
 
         drops: {
-            total: 0,
-            common: 0,
-            uncommon: 0,
-            rare: 0,
-            epic: 0,
-            legendary: 0,
-            mythic: 0
+            npc: {
+                common: 0,
+                uncommon: 0,
+                rare: 0,
+                epic: 0,
+                legendary: 0,
+                mythic: 0,
+                total: 0
+            },
+            components : {
+                common: 0,
+                uncommon: 0,
+                rare: 0,
+                epic: 0,
+                legendary: 0,
+                mythic: 0,
+                total: 0
+            },
+            filaments : {
+                common: 0,
+                uncommon: 0,
+                rare: 0,
+                epic: 0,
+                legendary: 0,
+                mythic: 0,
+                total: 0
+            }
         },
-
-        dropRates: {
-            common: 0.00,
-            uncommon: 0.00,
-            rare: 0.00,
-            epic: 0.00,
-            legendary: 0.00,
-            mythic: 0.00
-        }
     };
 
     const stats = {
@@ -928,7 +939,7 @@
                 : type == "zenko" || type == "xenia" || "shadowpriestess"
                     ? 2
                     : 3; // valenia
-        } else if (type == "pepehacker") {
+        } else if (type == "pepehacker" || type == "pepeanon") {
             value *= 3;
         }
         if (type.includes("name_"))
@@ -1341,7 +1352,7 @@
         }
 
         if (win02.querySelector(".window-title > img[src='icons/loot.svg']")) {
-            await updateStatisticsWindow();
+            await updateNpcDropRates();
             await manageLoot();
         };
         const windowOf02 = (icon) => win02.querySelector(`.window-title > img[src='icons/${icon}.svg']`)?.parentNode?.parentNode;
@@ -1974,9 +1985,17 @@
         else document.head.appendChild(Object.assign(document.createElement('style'), { id: 'customStyles', textContent: css }));
     }
 
-    const save = () => localStorage.setItem(`2spiCore-${player.username}`, JSON.stringify(player))
+    const save = () => {
+        if (!player.username) return;
+        localStorage.setItem(`2spiCore-${player.username}`, JSON.stringify(player));
+    };
 
-    const loadLocalStorage = () => {
+    const loadLocalStorage = async () => {
+        while (!player.username) {
+            player.username = document.querySelector("img[src='icons/online.svg']")?.parentNode?.innerText?.trim();
+            if (!player.username) await sleep(200);
+        };
+        
         if (!localStorage.getItem(`2spiCore-${player.username}`)) {
             save();
         } else {
@@ -2509,6 +2528,7 @@ any of these keys!
 
     // ======================================== 2spiCore Added Features ========================================
 
+
     // ======================================== Daily BTC Changes ========================================
 
     function createDailyChangeDiv() {
@@ -2518,7 +2538,7 @@ any of these keys!
         newDiv.classList.add('topbar-value', 'svelte-1azjldn');
         newDiv.style.cssText = 'display: flex; flex-direction: column; justify-content: center; align-items: center';
         newDiv.innerHTML = `
-                            <div style="display: flex; flex-direction: row-reverse; justify-content: center; align-items: center; gap: 0.125rem">
+                            <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 0.125rem">
                                 <img class="icon icon-in-text" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgoJPHBhdGggZD0iTTAgMGgxNnYxNkgweiIgZmlsbD0ibm9uZSIgLz4KCTxnIGZpbGw9IiNmNzkzMWEiPgoJCTxwYXRoIGQ9Ik0xLjUgMWEuNS41IDAgMCAxIC41LjVWMTRoMTIuNWEuNS41IDAgMCAxIDAgMWgtMTNhLjUuNSAwIDAgMS0uNS0uNXYtMTNhLjUuNSAwIDAgMSAuNS0uNSIgLz4KCQk8cGF0aCBkPSJNMTMuMDgxIDEuNjA2YTEgMSAwIDEgMSAxLjgzOC43ODhsLTMgN2ExIDEgMCAwIDEtMS40MzQuNDYzTDYuNTU0IDcuNDk4bC0xLjYwNiA0LjgxOGExIDEgMCAxIDEtMS44OTYtLjYzMmwyLTZsLjA0LS4xMDVhMSAxIDAgMCAxIDEuNDIzLS40MzZsNC4wMTcgMi40MXoiIC8+Cgk8L2c+Cjwvc3ZnPgo=">
                                 Daily Earnings
                             </div>
@@ -2602,7 +2622,7 @@ any of these keys!
         let statsWindow = document.createElement('div');
         statsWindow.id = 'stats-window';
         statsWindow.classList.add('window', 'svelte-1hjm43z');
-        statsWindow.style.cssText = 'display: none; z-index: 99; left: 714.5px; top: 356px;';
+        statsWindow.style.cssText = 'width: 28rem; display: none; z-index: 99; left: 714.5px; top: 356px;';
         statsWindow.innerHTML = `
                                 <div class='window-title svelte-1hjm43z' style='user-select: none;'>
                                     <img draggable='false' class='icon icon-in-text' src='${statsIcon}' alt='Statistics'> Statistics 
@@ -2610,24 +2630,37 @@ any of these keys!
                                         <img draggable='false' class='icon' src='https://s0urce.io/icons/close.svg' alt='Close Icon'>
                                     </button>
                                 </div>
-                                <div class='window-content svelte-1hjm43z' style='padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;'>
+                                <div class='window-content svelte-1hjm43z'>
                                 </div>`;
+        
+        const dropRateStats = document.createElement('div');
+        dropRateStats.id = 'dropRates-tab'
+        dropRateStats.innerHTML = `
+            <div class='window-content svelte-1hjm43z' style='padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem'>
+            <div style="background: #1a1a1a; border: 1px solid #2e2e2e; border-radius: 0.5rem; padding: 1rem; color: white">
+                <div style="font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 1rem">Drop Rates Statistics</div>
+                <div style="display: flex; background: #252525; border-radius: 0.5rem; padding: 0.250rem; margin-bottom: 1rem; gap: 0.25rem">
+                    <button id="npc-stats-tab" style="flex: 1; padding: 0.5rem; background: #454545; border: none; border-radius: 0.25rem; color: white; cursor: pointer; font-weight: 600; font-size: 1.125rem">NPC</button>
+                    <button id="filaments-stats-tab" style="flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 0.25rem; color: #aaaaaa; cursor: pointer; font-weight: 600; font-size: 1.125rem">Filaments</button>
+                    <button id="components-stats-tab" style="flex: 1; padding: 0.5rem; background: transparent; border: none; border-radius: 0.25rem; color: #aaaaaa; cursor: pointer; font-weight: 600; font-size: 1.125rem">Components</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center">
+                    <span style="font-size: 1rem; color: #aaaaaa">Rarity distribution</span>
+                    <span style="font-size: 1rem; color: #aaaaaa">Total: <span id="total-drops">${player.drops.npc['total']}</span></span>
+                </div>
+                <div id="dropRates-distributionBar" style="display: flex; width: 100%; height: 10px; background: #303030; border-radius: 0.5rem; overflow: hidden; margin-top: 0.225rem">
+                    ${insertDropRateStatsBar('npc')}
+                </div>
+                <div id="dropRates-statsRows" style="display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; column-gap: 0.5rem; row-gap: 0.5rem; margin-top: 1.25rem">
+                    ${insertDropRateStatsRows('npc')}
+                </div>
+            </div>
+            </div>`;
 
-        let npcStats = document.createElement('div');
-        npcStats.innerHTML = `
-                            <div style='display: flex; flex-direction: column; align-items: center; gap: 1.25rem; padding: 1rem 1.25rem; border-radius: 0.5rem; background-color: #1a1a1a; border: 1px solid #2e2e2e;'>
-                                <div style='text-align: center;'>
-                                    <h2 style='font-size: 2rem; font-weight: 700; margin: 0;'>NPC Drop Rate</h2>
-                                    <p style='font-size: 1.25rem; color: #aaaaaa; margin: 0.250rem 0 0;'>Statistics for <span id='hackedNpcCount'>${player.drops['total']}</span> NPCs</p>
-                                </div>
-                                <div style='display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; column-gap: 0.75rem; row-gap: 0.5rem;'>
-                                    ${insertNpcStatsRows()}
-                                </div>
-                            </div>`;
 
         desktopContainer.appendChild(statsDesktopIcon);
-        const statsWindowContent = statsWindow.querySelector('.window-content');
-        statsWindowContent.appendChild(npcStats);
+        const statsWindowContent = statsWindow.querySelector('#stats-window > .window-content');
+        statsWindowContent.appendChild(dropRateStats);
         document.querySelector('main').appendChild(statsWindow);
         statsWindowEventListeners();
     };
@@ -2665,55 +2698,123 @@ any of these keys!
         document.getElementById('closeStats').addEventListener('click', () => {
             statsWindow.style.display = 'none';
         });
+
+        document.getElementById('npc-stats-tab').addEventListener('click', () => {
+            updateDropRateStatsWindow('npc');
+        });
+
+        document.getElementById('filaments-stats-tab').addEventListener('click', () => {
+            updateDropRateStatsWindow('filaments');
+        });
+        
+        document.getElementById('components-stats-tab').addEventListener('click', () => {
+            updateDropRateStatsWindow('components');
+        });
     };
 
-    const insertNpcStatsRows = () => {
-        calculateDropRates();
+    const calculateDropRates = (type, rarity) => {
+        return player.drops[type]['total'] ? ((player.drops[type][rarity] / player.drops[type]['total']) * 100).toFixed(2) : '0.00';
+    };
+
+    const insertDropRateStatsRows = (type) => {
         return lootRarity.slice(0, -1).map(r => {
+            const count = player.drops[type][r.name];
+            const dropRate = calculateDropRates(type, r.name);
+    
             return `
-                <div style='width: 0.750rem; height: 0.750rem; border-radius: 50%; background: ${r.color}; flex-shrink: 0;'></div>
-                <span style='font-size: 1.25rem; font-weight: 600; color: white; text-align: left'>${r.name}</span>
-                <div style='position: relative; height: 0.5rem; width: 8rem; background: #2e2e2e; border-radius: 3px; overflow: hidden;'>
-                    <div id='${r.name}Bar' style='position: absolute; left: 0; top: 0; height: 100%; width: ${Math.pow(player.dropRates[r.name] / 100, 0.5) * 100}%; background: ${r.color};'></div>
-                </div>
-                <span style='font-size: 1.25rem; font-weight: 600; text-align: right;'><span id='${r.name}Rate'>${player.dropRates[r.name]}</span>%</span>
-                <span style='font-size: 1.25rem; color: #aaaaaa; text-align: right;'>(<span id='${r.name}Drops'>${player.drops[r.name]}</span>)</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem">
+                        <div style="width: 0.750rem; height: 0.750rem; border-radius: 50%; background: ${r.color}"></div>
+                        <span style="font-size: 1.25rem; font-weight: 600; color: white">${capitalize(r.name)}</span>
+                    </div>
+                    <span id="${r.name}-stats-rate" style="grid-column-start: 3; font-size: 1.25rem; font-weight: 600; color: white; min-width: 65px; text-align: right">${dropRate}%</span>
+                    <span id="${r.name}-stats-count" style="grid-column-start: 4; font-size: 1.25rem; color: #aaaaaa; min-width: 30px; text-align: right">${count}</span>
             `;
         }).join('');
     };
 
-    const calculateDropRates = () => {
-        lootRarity.slice(0, -1).forEach(r => {
-            player.dropRates[r.name] = player.drops['total'] ? ((player.drops[r.name] / player.drops['total']) * 100).toFixed(2) : '0.00';
-        });
+    const insertDropRateStatsBar = (type) => {    
+        return lootRarity.slice(0, -1).map(r => {
+            return `
+                <div id="${r.name}-rarityDistribution" style="width: ${calculateDropRates(type, r.name)}%; height: 100%; background: ${r.color}; flex-shrink: 0"></div>
+            `;
+        }).join('');
     };
 
-    const updateStatisticsWindow = async () => {
+    const updateNpcDropRates = async () => {
         const item = document.querySelector('.window-loot > div > div > div > div > div > .item');
         let background = item.style.background;
         let rarity = raritiesVariables[background] || raritiesVariables[background + ")"];
 
-        if (player.drops[rarity] === undefined) return;
+        if (player.drops.npc[rarity] === undefined) return;
 
-        player.drops['total']++;
-        player.drops[rarity]++;
-
-        document.getElementById('hackedNpcCount').textContent = player.drops['total'];
-        calculateDropRates();
-
-        lootRarity.slice(0, -1).forEach(r => {
-            document.getElementById(`${r.name}Bar`).style.width = `${Math.pow(player.dropRates[r.name] / 100, 0.5) * 100}%`;
-            document.getElementById(`${r.name}Rate`).textContent = player.dropRates[r.name];
-            document.getElementById(`${r.name}Drops`).textContent = player.drops[r.name];
-        });
-
+        player.drops.npc['total']++;
+        player.drops.npc[rarity]++;
+        updateDropRateStatsWindow('npc');
         save();
     };
 
-    const getUsername = async () => {
-        while (!player.username)
-            player.username = document.querySelector("img[src='icons/online.svg']")?.parentNode?.innerText?.trim();
-            await sleep(200);
+    const updateAgentDropRates = (type) => {
+        if (type === 'filaments') {
+            const filaAgentDiv = document?.querySelector('img[src="icons/filament.svg"][alt="Agent"]')?.closest('div[style*="flex-direction: column"]');
+            const filaContainers = filaAgentDiv?.querySelectorAll('div[style="display: flex; align-items: center; justify-content: center; gap: 5px;"] > div > div');
+            filaContainers.forEach(container => {
+                const rarity = container.parentElement.querySelector('img').src.replace('https://s0urce.io/icons/filament-', '').replace('.svg', '');
+                const filaAmmount = parseInt(container.textContent);
+    
+                if (player.drops.filaments[rarity] === undefined) return;
+
+                player.drops.filaments['total'] += filaAmmount;
+                player.drops.filaments[rarity] += filaAmmount;
+                updateDropRateStatsWindow('filaments');
+            });
+        } else if (type === 'components') {
+            const compAgentDiv = document?.querySelector('img[src="icons/targetList.svg"][alt="Agent"]')?.closest('div[style*="flex-direction: column"]');
+        const compContainers = compAgentDiv?.querySelectorAll('div[style="display: flex; align-items: center; justify-content: center; gap: 5px;"] > div > div');
+            compContainers.forEach(item => {
+                if (item.classList.contains('item-slot-hasitem')) {
+                    let background = item.querySelector('.item').style.background;
+                    let rarity = raritiesVariables[background] || raritiesVariables[background + ")"];
+                    
+                    if (player.drops.components[rarity] === undefined) return;
+
+                    player.drops.components['total']++;
+                    player.drops.components[rarity]++;
+                    updateDropRateStatsWindow('components');
+                };
+            });
+        };
+        save();
+    };
+
+    const updateDropRateStatsWindow = (type) => {
+        document.getElementById('total-drops').textContent = player.drops[type]['total'];
+        document.getElementById('dropRates-statsRows').innerHTML = insertDropRateStatsRows(type);
+        document.getElementById('dropRates-distributionBar').innerHTML = insertDropRateStatsBar(type);
+
+        const dropRatesTab = ['npc', 'filaments', 'components'];
+        dropRatesTab.forEach(tab => {
+            const button = document.getElementById(`${tab}-stats-tab`);
+            const active = tab === type;
+    
+            button.style.background = active ? '#454545' : 'transparent';
+            button.style.color = active ? 'white' : '#aaaaaa';
+        });
+    };
+
+    const agentListener = () => {
+        document.querySelector('main').addEventListener('click', (e) => {
+            const filaAgentDiv = document?.querySelector('img[src="icons/filament.svg"][alt="Agent"]')?.closest('div[style*="flex-direction: column"]');
+            const compAgentDiv = document?.querySelector('img[src="icons/targetList.svg"][alt="Agent"]')?.closest('div[style*="flex-direction: column"]');
+            const agentButtons = e.target.classList.contains('green') && (e.target.textContent === 'Grab Loot' || e.target.textContent === 'Shred all');
+
+            if (agentButtons && filaAgentDiv?.contains(e.target)) {
+                updateAgentDropRates('filaments');
+            };
+
+            if (agentButtons && compAgentDiv?.contains(e.target)) {
+                updateAgentDropRates('components');
+            };
+        });
     };
 
     /*  Feature registry: everything the startup sequence loads, in load order.
@@ -2738,7 +2839,6 @@ any of these keys!
             ]
         },
         { name: "Progress bar resize", load: editProgressBar },
-        { name: "Getting username", load: getUsername },
         { name: "Saved settings", load: loadLocalStorage },
         { name: "Theme style", load: updateThemeStyle },
         { name: "Custom style", load: loadStyle },
@@ -2746,7 +2846,8 @@ any of these keys!
         { name: "Default windows", load: openWindows },
         // { name: "Networth calculation", load: calculateNetworth },
         { name: "Networth display", load: createNetworthDiv, includes: ["Networth observer"] },
-        { name: "Statistics display", load: createStatisticsWindow, includes: ["Loot observer"] },
+        { name: "Agents looting listener", load: agentListener },
+        { name: "Statistics display", load: createStatisticsWindow, includes: ["Loot observer", "Agents looting listener"] },
         { name: "Daily BTC Earnings display", load: createDailyChangeDiv, includes: ["BTC Balance observer"] },
         { name: "Item swag", load: applyItemSwag },
         { name: "Welcome message", load: async () => { divs["Log"].click(); await sleep(100); editWelcomeMessage(); } },
