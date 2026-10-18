@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2spiCore
-// @version      1.1.21
+// @version      1.1.22
 // @description  d0urce Fork
 // @author       2spi & d0t
 // @match        https://s0urce.io/
@@ -8,11 +8,12 @@
 // @downloadURL  https://github.com/tijasp/2spiCore/raw/refs/heads/main/d0urce-prettier.user.js
 // @updateURL    https://github.com/tijasp/2spiCore/raw/refs/heads/main/d0urce-prettier.user.js
 // @grant        none
+// @run-at       document-start
 // ==/UserScript==
 
 (function () {
     'use strict';
-    const VERSION = "1.1.21";
+    const VERSION = "1.1.22";
 
     const hljsBase = "pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}";
     const hljsTemplates = {
@@ -202,8 +203,6 @@
     // { rarity: { cpu, gpu, psu, firewall, other } } with every type of a rarity set to value(rarityIndex)
     const perRarity = (list, value) => Object.fromEntries(list.map((rarity, i) =>
         [rarity, Object.fromEntries(["cpu", "gpu", "psu", "firewall", "other"].map(type => [type, value(i)]))]));
-
-    let currentBtcPrice = null;
 
     let player = {
         username: null,
@@ -1060,9 +1059,6 @@
 
     const btcBalanceObserver = new MutationObserver(() => {
         updateDailyBalance();
-        if (currentBtcPrice) {
-            updateBtcToUsdConverter();
-        };
     });
 
     let manageLoot = async () => {
@@ -2540,16 +2536,43 @@ any of these keys!
         return number > 1000 ? `${(number / 1000).toFixed(2)}k` : number;
     };
 
-    const getCurrentBtcPrice = async () => {
+    // ======================================== Fix BTC to USD API ========================================
+
+    const originalFetch = window.fetch;
+
+    window.fetch = async function(input, options) {
+        const url = input instanceof Request ? input.url : String(input);
+
+        if (!url.includes("api.coindesk.com/v1/bpi/currentprice/BTC.json")) {
+            return originalFetch.call(this, input, options);
+        };
+
         try {
-          const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-          if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status}`);
-          }
-          const currentPrice = await response.json();
-          currentBtcPrice = currentPrice['bitcoin']['usd'];
+            const response = await originalFetch.call(this, "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+
+            if (!response.ok) {
+                throw new Error(`CoinGecko HTTP ${response.status}`);
+            };
+
+            const data = await response.json();
+            const btcPrice = data?.bitcoin?.usd;
+
+            if (typeof btcPrice !== "number" || !Number.isFinite(btcPrice)) {
+                throw new Error("Invalid BTC Price");
+            };
+
+            const coindeskData = {
+                bpi: {
+                    USD: {
+                        rate_float: btcPrice
+                    }
+                }
+            };
+
+            return new Response(JSON.stringify(coindeskData), {status: 200, headers: {"Content-Type": "application/json"}});
+
         } catch (error) {
-          console.error('Impossible to fetch API: ', error);
+            console.error("Error on API fetch: ", error);
         };
     };
 
@@ -2583,15 +2606,6 @@ any of these keys!
             save();
         };
         return btcStats.startBalance;
-    };
-
-    const updateBtcToUsdConverter = () => {
-        const container = document.querySelector('body > div > main > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)');
-        const usdCount = container.parentElement.querySelector('div:nth-child(2) > div:nth-child(1)');
-        const actualBalance = parseFloat(container.textContent.split(' BTC')[0]);
-
-        const convertedBtc = currentBtcPrice * actualBalance;
-        usdCount.textContent = '$' + formatNumber(convertedBtc);
     };
 
     const updateDailyBalance = async () => {
@@ -2907,13 +2921,12 @@ any of these keys!
         { name: "Theme style", load: updateThemeStyle },
         { name: "Custom style", load: loadStyle },
         { name: "Syntax highlighting scripts", load: loadScripts },
-        { name: "Default windows", load: openWindows },
         // { name: "Networth calculation", load: calculateNetworth },
         { name: "Networth display", load: createNetworthDiv, includes: ["Networth observer"] },
         { name: "Agents looting listener", load: agentListener },
         { name: "Statistics display", load: createStatisticsWindow, includes: ["Loot observer", "Agents looting listener"] },
         { name: "Daily BTC Earnings display", load: createDailyChangeDiv, includes: ["BTC Balance observer"] },
-        { name: "Get current BTC price", load: getCurrentBtcPrice },
+        { name: "Default windows", load: openWindows },
         { name: "Item swag", load: applyItemSwag },
         { name: "Welcome message", load: async () => { divs["Log"].click(); await sleep(100); editWelcomeMessage(); } },
         { name: "Checking last version", load: checkVersion },
@@ -2936,6 +2949,7 @@ any of these keys!
     }
 
     (async () => {
+        // Here
         while (document.querySelector("#login-top") || window.location.href !== "https://s0urce.io/")
             await sleep(500);
         loadingScreen("create", "2spiCore");
