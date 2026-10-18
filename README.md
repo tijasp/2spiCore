@@ -2,3 +2,4 @@
 - Alt account support
 - Daily BTC earnings counter
 - Drop Rates Statistics (NPC & Agents)
+- BTC to USD API Fixed
